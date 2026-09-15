@@ -9,6 +9,10 @@
 #include "../Projectile.h"
 #endif
 
+// libraries for random number generator
+#include <cstdlib>
+#include <ctime>
+
 class rvWeaponRocketLauncher : public rvWeapon {
 public:
 
@@ -444,11 +448,16 @@ stateResult_t rvWeaponRocketLauncher::State_Fire ( const stateParms_t& parms ) {
 		STAGE_WAIT,
 	};	
 	switch ( parms.stage ) {
-		case STAGE_INIT:
+		case STAGE_INIT: {
+			// random number generator
+			srand(time(0));
+			int randNum = (rand() % 5) + 1;
+
 			nextAttackTime = gameLocal.time + (fireRate * owner->PowerUpModifier ( PMOD_FIRERATE ));		
-			Attack ( false, 1, spread, 0, 1.0f );
+			Attack ( false, randNum, spread, 0, 1.0f ); // Original: Attack ( false, 1, spread, 0, 1.0f );
 			PlayAnim ( ANIMCHANNEL_LEGS, "fire", parms.blendFrames );	
 			return SRESULT_STAGE ( STAGE_WAIT );
+			}
 	
 		case STAGE_WAIT:			
 			if ( wsfl.attack && gameLocal.time >= nextAttackTime && ( gameLocal.isClient || AmmoInClip ( ) ) && !wsfl.lowerWeapon ) {
