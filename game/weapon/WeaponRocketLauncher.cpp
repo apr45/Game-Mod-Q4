@@ -151,15 +151,17 @@ void rvWeaponRocketLauncher::Think ( void ) {
 	rvWeapon::Think ( );
 
 	// IF no guide range is set then we dont have the mod yet	
-	if ( !guideRange ) {
+	/*if (!guideRange) {
 		return;
-	}
+	}*/
 	
 	if ( !wsfl.zoom ) {
-		if ( guideEffect ) {
+		if (guideEffect) {
 			guideEffect->Stop();
 			guideEffect = NULL;
 		}
+
+		srand(time(0));
 
 		for ( i = guideEnts.Num() - 1; i >= 0; i -- ) {
 			idGuidedProjectile* proj = static_cast<idGuidedProjectile*>(guideEnts[i].GetEntity());
@@ -173,6 +175,11 @@ void rvWeaponRocketLauncher::Think ( void ) {
 				proj->CancelGuide ( );				
 				proj->SetSpeed ( guideSpeedFast, (1.0f - (proj->GetSpeed ( ) - guideSpeedSlow) / (guideSpeedFast - guideSpeedSlow)) * guideAccelTime );
 			}
+
+			// set projectile speed at random
+			int randNum = (rand() % 1000) + 1;
+			gameLocal.Printf("Speed Random Number: (%i)\n", randNum);
+			proj->SetSpeed(randNum, randNum);
 		}
 
 		return;
@@ -218,14 +225,14 @@ void rvWeaponRocketLauncher::OnLaunchProjectile ( idProjectile* proj ) {
 	rvWeapon::OnLaunchProjectile(proj);
 
 	// Double check that its actually a guided projectile
-	if ( !proj || !proj->IsType ( idGuidedProjectile::GetClassType() ) ) {
+	/*if (!proj || !proj->IsType(idGuidedProjectile::GetClassType())) {
 		return;
-	}
+	}*/
 
 	// Launch the projectile
 	idEntityPtr<idEntity> ptr;
 	ptr = proj;
-	guideEnts.Append ( ptr );	
+	guideEnts.Append ( ptr );
 }
 
 /*
