@@ -10,8 +10,8 @@
 #endif
 
 // libraries for random number generator
-#include <cstdlib>
-#include <ctime>
+	#include <cstdlib>
+	#include <ctime>
 
 class rvWeaponRocketLauncher : public rvWeapon {
 public:
@@ -150,10 +150,11 @@ void rvWeaponRocketLauncher::Think ( void ) {
 	// Let the real weapon think first
 	rvWeapon::Think ( );
 
-	// IF no guide range is set then we dont have the mod yet	
-	/*if (!guideRange) {
-		return;
-	}*/
+	// ensure code after statement runs even if rocket homing is not on 
+		// IF no guide range is set then we dont have the mod yet	
+			/*if (!guideRange) {
+				return;
+			}*/
 	
 	if ( !wsfl.zoom ) {
 		if (guideEffect) {
@@ -161,7 +162,8 @@ void rvWeaponRocketLauncher::Think ( void ) {
 			guideEffect = NULL;
 		}
 
-		srand(time(0));
+		// seed value for random generator
+			srand(time(0)); // set value to system clock, current time of computer
 
 		for ( i = guideEnts.Num() - 1; i >= 0; i -- ) {
 			idGuidedProjectile* proj = static_cast<idGuidedProjectile*>(guideEnts[i].GetEntity());
@@ -176,10 +178,10 @@ void rvWeaponRocketLauncher::Think ( void ) {
 				proj->SetSpeed ( guideSpeedFast, (1.0f - (proj->GetSpeed ( ) - guideSpeedSlow) / (guideSpeedFast - guideSpeedSlow)) * guideAccelTime );
 			}
 
-			// set projectile speed at random
-			int randNum = (rand() % 1000) + 1;
-			gameLocal.Printf("Speed Random Number: (%i)\n", randNum);
-			proj->SetSpeed(randNum, randNum);
+			// set projectile speed at random evertime player shoots
+				int randNum = (rand() % 1000) + 1; // generates random number between 1 to 1000
+				gameLocal.Printf("Speed Random Number: (%i)\n", randNum); // a check to ensure this part of the code is running
+				proj->SetSpeed(randNum, randNum); // altered speed value and acceleration time
 		}
 
 		return;
@@ -224,10 +226,11 @@ rvWeaponRocketLauncher::OnLaunchProjectile
 void rvWeaponRocketLauncher::OnLaunchProjectile ( idProjectile* proj ) {
 	rvWeapon::OnLaunchProjectile(proj);
 
-	// Double check that its actually a guided projectile
-	/*if (!proj || !proj->IsType(idGuidedProjectile::GetClassType())) {
-		return;
-	}*/
+	// prevents checkings for guided projectiles
+		// Double check that its actually a guided projectile
+		/*if (!proj || !proj->IsType(idGuidedProjectile::GetClassType())) {
+			return;
+		}*/
 
 	// Launch the projectile
 	idEntityPtr<idEntity> ptr;
@@ -456,12 +459,14 @@ stateResult_t rvWeaponRocketLauncher::State_Fire ( const stateParms_t& parms ) {
 	};	
 	switch ( parms.stage ) {
 		case STAGE_INIT: {
-			// random number generator
-			srand(time(0));
-			int randNum = (rand() % 5) + 1;
+			// code alteration: rocket fires random amount of projectiles everytime player shoots
+			
+				// generates random number between 1 to 5
+					int randNum = (rand() % 5) + 1; // pseudo random generator; produces number that seem random but is actually determined by a starting value
 
-			nextAttackTime = gameLocal.time + (fireRate * owner->PowerUpModifier ( PMOD_FIRERATE ));		
-			Attack ( false, randNum, spread, 0, 1.0f ); // Original: Attack ( false, 1, spread, 0, 1.0f );
+			nextAttackTime = gameLocal.time + (fireRate * owner->PowerUpModifier ( PMOD_FIRERATE ));
+
+				Attack ( false, randNum, spread, 0, 1.0f ); // Original Line: Attack ( false, 1, spread, 0, 1.0f );
 			PlayAnim ( ANIMCHANNEL_LEGS, "fire", parms.blendFrames );	
 			return SRESULT_STAGE ( STAGE_WAIT );
 			}
