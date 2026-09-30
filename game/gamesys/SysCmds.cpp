@@ -2939,6 +2939,23 @@ void Cmd_BuyItem_f( const idCmdArgs& args ) {
 
 	player->GenerateImpulseForBuyAttempt( args.Argv(1) );
 }
+
+// ---------------------------------------------- custom commands ----------------------------------------------
+void Cmd_helpScreenExit_f(const idCmdArgs& args) {
+	// pointer to player
+	idPlayer* player = gameLocal.GetLocalPlayer();
+
+	// checks if player pointer isn't null
+	if (player && player->hud) {
+		// hides help screen
+		player->hud->HandleNamedEvent("hideHelpScreen");
+		gameLocal.Printf("Help Screen set to hidden\n");
+	}
+	else {
+		gameLocal.Printf("Player not found\n");
+	}
+}
+
 // RITUAL END
 
 void Cmd_PlayerEmote_f( const idCmdArgs& args ) {
@@ -3233,6 +3250,8 @@ void idGameLocal::InitConsoleCommands( void ) {
 	cmdSystem->AddCommand( "buy",					Cmd_BuyItem_f,				CMD_FL_GAME,				"Buy an item (if in a buy zone and the game type supports it)" );
 // RITUAL END
 
+	//custom commands
+	cmdSystem->AddCommand("helpScreenExit", Cmd_helpScreenExit_f, CMD_FL_GAME, "Turns off visibility of help screen");
 }
 
 /*

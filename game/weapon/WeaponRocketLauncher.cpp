@@ -179,9 +179,10 @@ void rvWeaponRocketLauncher::Think ( void ) {
 			}
 
 			// set projectile speed at random evertime player shoots
-				int randNum = (rand() % 1000) + 1; // generates random number between 1 to 1000
+				/*int randNum = (rand() % 1000) + 1; // generates random number between 1 to 1000
 				gameLocal.Printf("Speed Random Number: (%i)\n", randNum); // a check to ensure this part of the code is running
 				proj->SetSpeed(randNum, randNum); // altered speed value and acceleration time
+				*/
 		}
 
 		return;
@@ -465,8 +466,7 @@ stateResult_t rvWeaponRocketLauncher::State_Fire ( const stateParms_t& parms ) {
 					int randNum = (rand() % 5) + 1; // pseudo random generator; produces number that seem random but is actually determined by a starting value
 
 			nextAttackTime = gameLocal.time + (fireRate * owner->PowerUpModifier ( PMOD_FIRERATE ));
-
-				Attack ( false, randNum, spread, 0, 1.0f ); // Original Line: Attack ( false, 1, spread, 0, 1.0f );
+			Attack ( false, randNum, spread, 0, 1.0f ); // Original Line: Attack ( false, 1, spread, 0, 1.0f );
 			PlayAnim ( ANIMCHANNEL_LEGS, "fire", parms.blendFrames );	
 			return SRESULT_STAGE ( STAGE_WAIT );
 			}
