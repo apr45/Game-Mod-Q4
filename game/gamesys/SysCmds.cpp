@@ -2941,6 +2941,8 @@ void Cmd_BuyItem_f( const idCmdArgs& args ) {
 }
 
 // ---------------------------------------------- custom commands ----------------------------------------------
+
+// closes help screen
 void Cmd_helpScreenExit_f(const idCmdArgs& args) {
 	// pointer to player
 	idPlayer* player = gameLocal.GetLocalPlayer();
@@ -2955,6 +2957,8 @@ void Cmd_helpScreenExit_f(const idCmdArgs& args) {
 		gameLocal.Printf("Player not found\n");
 	}
 }
+
+// ---------------------------------------------- custom commands ----------------------------------------------
 
 // RITUAL END
 
@@ -3250,8 +3254,8 @@ void idGameLocal::InitConsoleCommands( void ) {
 	cmdSystem->AddCommand( "buy",					Cmd_BuyItem_f,				CMD_FL_GAME,				"Buy an item (if in a buy zone and the game type supports it)" );
 // RITUAL END
 
-	//custom commands
-	cmdSystem->AddCommand("helpScreenExit", Cmd_helpScreenExit_f, CMD_FL_GAME, "Turns off visibility of help screen");
+//custom commands
+cmdSystem->AddCommand("helpScreenExit", Cmd_helpScreenExit_f, CMD_FL_GAME, "Turns off visibility of help screen");
 }
 
 /*

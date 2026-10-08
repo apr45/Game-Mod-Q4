@@ -1378,7 +1378,7 @@ void idPlayer::SetWeapon( int weaponIndex ) {
 
 	previousWeapon	= currentWeapon;
 	currentWeapon	= weaponIndex;
-	weaponGone		= false;		
+	weaponGone = false;
 
 	if ( weaponIndex < 0 ) {
 		weaponGone = true;
@@ -1547,6 +1547,9 @@ void idPlayer::Init( void ) {
 	lightningNextTime		= 0;
 
 	modelName				= idStr();
+
+	// custom properties
+	freezePlayerMovement = false;
 
 	// Remove any hearing loss that may be set up from the last map
 	soundSystem->FadeSoundClasses( SOUNDWORLD_GAME, 0, 0.0f, 0 );
@@ -7602,7 +7605,7 @@ void idPlayer::BobCycle( const idVec3 &pushVelocity ) {
 
 	//
 	// calculate speed and cycle to be used for
-	// all cyclic walking effects
+	// all cyclic PM_FREEZE effects
 	//
 	velocity = physicsObj.GetLinearVelocity() - pushVelocity;
 
@@ -8976,7 +8979,7 @@ void idPlayer::Move( void ) {
 	} else if ( health <= 0 ) {
 		physicsObj.SetContents( CONTENTS_CORPSE | CONTENTS_MONSTERCLIP );
 		physicsObj.SetMovementType( PM_DEAD );
- 	} else if ( gameLocal.inCinematic || pfl.objectiveFailed || gameLocal.GetCamera() || privateCameraView || ( influenceActive == INFLUENCE_LEVEL2 ) ) {
+ 	} else if ( gameLocal.inCinematic || pfl.objectiveFailed || gameLocal.GetCamera() || privateCameraView || ( influenceActive == INFLUENCE_LEVEL2 ) || freezePlayerMovement == true) { // add extra condition to consider (freezePlayerMovement)
 		physicsObj.SetContents( CONTENTS_BODY | (use_combat_bbox?CONTENTS_SOLID:0) );
 		physicsObj.SetMovementType( PM_FREEZE );
 	} else {
@@ -9628,15 +9631,39 @@ void idPlayer::Think( void ) {
 		common->DPrintf( "player %d not thinking?\n", entityNumber );
 	}
 
-	if ( g_showEnemies.GetBool() ) {
+	// checks for nearby enemies
+	if ( true ) { //Original Line: if ( g_showEnemies.GetBool() ) {
+		// store enemy entity
 		idActor *ent;
-		int num = 0;
+
+		// iterate through a list of active enemies targeting player
 		for( ent = enemyList.Next(); ent != NULL; ent = ent->enemyNode.Next() ) {
-			common->DPrintf( "enemy (%d)'%s'\n", ent->entityNumber, ent->name.c_str() );
-			gameRenderWorld->DebugBounds( colorRed, ent->GetPhysics()->GetBounds().Expand( 2 ), ent->GetPhysics()->GetOrigin() );
-			num++;
+			// gets distance between player and enemy
+			float playerDistanceToEnemy = DistanceTo(ent) * 0.0254f;
+
+			// checks if player is near a enemy within a certain distance
+			if (playerDistanceToEnemy < 2) {
+				// renders a 3D red box around the enemy
+				//common->DPrintf("enemy (%d)'%s'\n", ent->entityNumber, ent->name.c_str());
+				gameRenderWorld->DebugBounds(colorRed, ent->GetPhysics()->GetBounds().Expand(2), ent->GetPhysics()->GetOrigin());
+
+				gameLocal.Printf("Player Position to Enemy: %f \n", playerDistanceToEnemy);
+
+				// checks if hud isn't null
+				if (hud) {
+					// temp: popup gui becomes visible
+					hud->HandleNamedEvent("viewPopup");
+					gameLocal.Printf("Pop up is visible\n");
+				}
+
+				// sets flag to freeze player movement
+				freezePlayerMovement = true;
+
+				// prevents enemies from attacking player
+				Event_DisableTarget();
+			}
 		}
-		common->DPrintf( "%d: enemies\n", num );
+		//common->DPrintf( "%d: enemies\n", num );
 	}
 
 	if ( !inBuyZonePrev )

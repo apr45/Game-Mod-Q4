@@ -1201,8 +1201,9 @@ void idAI::Think( void ) {
 			// update state machine
 			UpdateStates();
 
-			// run all movement commands
-			Move();
+			// freezes ai movements (e.g, enemies)
+				// run all movement commands
+				//Move();
 
 			// if not dead, chatter and blink
 			if( move.moveType != MOVETYPE_DEAD ){

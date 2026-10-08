@@ -432,9 +432,19 @@ windowDef Desktop
 		set "ViewComments::visible" "0";
 	}
 
+	// ---------------------------------------------- custom events ----------------------------------------------
 	onNamedEvent hideHelpScreen {
 		set "helpScreen::visible" "0";
 	}
+
+	onNamedEvent viewPopup {
+		set "testPopup::visible" "1";
+	}
+
+	onNamedEvent hidePopup {
+		set "testPopup::visible" "0";
+	}
+	// ---------------------------------------------- custom events ----------------------------------------------
 
 	windowDef speed
 	{
@@ -2364,6 +2374,8 @@ windowDef Desktop
 		}
 
 	}
+
+	// ---------------------------------------------- custom gui ----------------------------------------------
 	windowDef helpScreen
 	{
 		rect	0,0,640,480
@@ -2393,5 +2405,11 @@ windowDef Desktop
 			textscale	0.28
 			font	"fonts/marine"
 		}
+	}
+	windowDef testPopup
+	{
+		rect	0,0,100,100
+		visible	0
+		backcolor	1,0,0,1
 	}
 }
