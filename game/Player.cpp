@@ -7,7 +7,6 @@
 #pragma hdrstop
 
 #include "Game_local.h"
-
 #include "ai/AI.h"
 #include "ai/AI_Manager.h"
 #include "Weapon.h"
@@ -1499,7 +1498,7 @@ void idPlayer::Init( void ) {
 	const char			*value;
 	
 	noclip					= false;
-	godmode					= false;
+	godmode					= true; // original: false
 	godmodeDamage			= 0;
 	undying					= g_forceUndying.GetBool() ? !gameLocal.isMultiplayer : false;
 
@@ -1546,10 +1545,29 @@ void idPlayer::Init( void ) {
 	lightningEffects		= 0;
 	lightningNextTime		= 0;
 
-	modelName				= idStr();
+	modelName		
+		= idStr();
 
-	// custom properties
-	freezePlayerMovement = false;
+	// ---------------------------------------------- custom properties ----------------------------------------------
+	initialHealthSet = false; // baseline health has not been set yet
+
+	freezePlayerMovement = false; // player movement has not been frozen
+
+	isTurnBasedMode = false; // gameplay starts regularly; not in turn-based mode
+
+	// sets up inital turn state
+		playerTurn = false; 
+		enemyTurn = false;
+
+
+	turnBasedRound = 0; // resets cycle tracker
+
+	// sets up state of turn-based actions
+		canPlayerChoose = false;
+		canSwitchDialogue = false;
+		nextDialogue = false;
+	// ---------------------------------------------- custom properties ----------------------------------------------
+
 
 	// Remove any hearing loss that may be set up from the last map
 	soundSystem->FadeSoundClasses( SOUNDWORLD_GAME, 0, 0.0f, 0 );
@@ -9287,7 +9305,13 @@ Called every tic for each player
 */
 void idPlayer::Think( void ) {
 	renderEntity_t *headRenderEnt;
- 
+	
+	// ensures player starts with 100% health at spawn
+	if (health != 100 && !initialHealthSet) {
+		health = 100;
+		initialHealthSet = true;
+	}
+
 	if ( talkingNPC ) {
 		if ( !talkingNPC.IsValid() ) {
 			talkingNPC = NULL;
@@ -9631,8 +9655,8 @@ void idPlayer::Think( void ) {
 		common->DPrintf( "player %d not thinking?\n", entityNumber );
 	}
 
-	// checks for nearby enemies
-	if ( true ) { //Original Line: if ( g_showEnemies.GetBool() ) {
+	// checks for nearby enemies before entering into turn-based mode
+	if (!isTurnBasedMode) {
 		// store enemy entity
 		idActor *ent;
 
@@ -9642,28 +9666,32 @@ void idPlayer::Think( void ) {
 			float playerDistanceToEnemy = DistanceTo(ent) * 0.0254f;
 
 			// checks if player is near a enemy within a certain distance
-			if (playerDistanceToEnemy < 2) {
-				// renders a 3D red box around the enemy
-				//common->DPrintf("enemy (%d)'%s'\n", ent->entityNumber, ent->name.c_str());
-				gameRenderWorld->DebugBounds(colorRed, ent->GetPhysics()->GetBounds().Expand(2), ent->GetPhysics()->GetOrigin());
-
+			if (playerDistanceToEnemy < 2 ) {
 				gameLocal.Printf("Player Position to Enemy: %f \n", playerDistanceToEnemy);
 
-				// checks if hud isn't null
-				if (hud) {
-					// temp: popup gui becomes visible
-					hud->HandleNamedEvent("viewPopup");
-					gameLocal.Printf("Pop up is visible\n");
-				}
+				// renders a 3D red box around the enemy
+				//gameRenderWorld->DebugBounds(colorRed, ent->GetPhysics()->GetBounds().Expand(2), ent->GetPhysics()->GetOrigin());
+				
+				// stores enemy name
+				enemyType = ent->name;
 
 				// sets flag to freeze player movement
 				freezePlayerMovement = true;
-
+				
 				// prevents enemies from attacking player
 				Event_DisableTarget();
+
+				// enact turn-based system
+				EnterTurnBasedMode();
 			}
 		}
-		//common->DPrintf( "%d: enemies\n", num );
+	} else if (isTurnBasedMode) {
+		// turn-based loop
+		if (playerTurn && !canPlayerChoose) {
+			turnBasedRound++;
+			gameLocal.Printf("Loop: %i\n", turnBasedRound);
+			TurnBasedMode(); 
+		}
 	}
 
 	if ( !inBuyZonePrev )
@@ -14105,3 +14133,94 @@ int idPlayer::CanSelectWeapon(const char* weaponName)
 }
 
 // RITUAL END
+
+// ---------------------------------------------- custom functions ----------------------------------------------
+/*
+==============
+idPlayer::EnterTurnBasedMode
+
+Set up state of turn-based system before player's first turn
+==============
+*/
+void idPlayer::EnterTurnBasedMode() {
+	gameLocal.Printf("Player entered combat with enemy!\n");
+
+	// checks if hud isn't null
+	if (hud) {
+		// turn-based system gui becomes visible
+		hud->HandleNamedEvent("turnBased_modeOn");
+		hud->SetStateString("dialogue_text1", "Player has entered a battle with " + enemyType);
+	}
+
+	// ensures player takes action first 
+	playerTurn = true;
+
+	// enters turn-based system
+	isTurnBasedMode = true;
+}
+
+/*
+==============
+idPlayer::TurnBasedMode
+
+Handles the turned-based interaction between player and enemy
+==============
+*/
+void idPlayer::TurnBasedMode() {
+	// checks if it's the player's turn to interact
+	if (playerTurn) {
+		// enables choices gui for player
+		hud->HandleNamedEvent("playerTurn");
+		hud->SetStateString("dialogue_text2", "Your Choice: ");
+		gameLocal.Printf("Player's turn, enemy waits...\n");
+
+		// permits player to choose an option 
+		canPlayerChoose = true;
+	} else {
+		// disable choices gui for player
+		gameLocal.Printf("Player's turn ended.\n");
+		hud->HandleNamedEvent("playerTurn");
+
+		// clears text on second dialogue box
+		hud->SetStateString("dialogue_text2", "");
+
+		if (playerChoice == 1) {
+			hud->SetStateString("dialogue_text1", "Player Chose to Act");
+		}
+		else if (playerChoice == 2) {
+			hud->SetStateString("dialogue_text1", "Player Chose to Block");
+		}
+		else if (playerChoice == 3) {
+			hud->SetStateString("dialogue_text1", "Player Chose to Attack");
+		}
+
+		// enemy takes action after processing player's choice
+		enemyTurn = true;
+		EnemyAttack();
+
+	}
+}
+
+/*
+==============
+idPlayer::EnemyAttack
+
+Handles process of enemy attack
+==============
+*/
+void idPlayer::EnemyAttack() {
+	
+	// checks if it's the enemy's turn to interact
+	if (enemyTurn) {
+		gameLocal.Printf("Enemy's turn, player waits...\n");
+		hud->SetStateString("dialogue_text1", "Enemy attack");
+		hud->SetStateString("dialogue_text2", "Enemy is attacking");
+
+		canSwitchDialogue = true;
+	} else if (nextDialogue) {
+		// ends enemy's turn
+		gameLocal.Printf("Enemy's turn ended\n");
+		hud->SetStateString("dialogue_text1", "");
+		playerTurn = true;
+	}
+}
