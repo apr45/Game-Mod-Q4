@@ -17,6 +17,10 @@
 #include "Healing_Station.h"
 #include "ai/AI_Medic.h"
 
+// libraries for random number generator
+	#include <cstdlib>
+	#include <ctime>
+
 // RAVEN BEGIN
 // nrausch: support for turning the weapon change ui on and off
 #ifdef _XENON
@@ -1566,6 +1570,17 @@ void idPlayer::Init( void ) {
 		canPlayerChoose = false;
 		canSwitchDialogue = false;
 		nextDialogue = false;
+		blockAttack = false;
+		switchToEnemyAttack = false;
+
+	// sets up values for enemy stats
+		enemyAttackDamage = 5; 
+		enemyMissChance = 10;
+		enemyCritChance = 10;
+
+	// sets up values for player stats
+		playerAttackDamage = 5;
+		playerCritChance = 25;
 	// ---------------------------------------------- custom properties ----------------------------------------------
 
 
@@ -1787,6 +1802,10 @@ void idPlayer::Init( void ) {
 		teamDoublerPending = false;
 		teamDoubler = PlayEffect( "fx_doubler", renderEntity.origin, renderEntity.axis, true );
 	}
+
+
+	// seed value for random generator
+	srand(time(0)); // set value to system clock, current time of computer
 }
 
 /*
@@ -9672,9 +9691,10 @@ void idPlayer::Think( void ) {
 				// renders a 3D red box around the enemy
 				//gameRenderWorld->DebugBounds(colorRed, ent->GetPhysics()->GetBounds().Expand(2), ent->GetPhysics()->GetOrigin());
 				
-				// stores enemy name
-				enemyType = ent->name;
-
+				// stores enemy stats that player is fighting against
+				enemyType = enemyType.EnemyNameCleanUp(ent->name);
+				enemyHealth = ent->health;
+			
 				// sets flag to freeze player movement
 				freezePlayerMovement = true;
 				
@@ -14149,7 +14169,7 @@ void idPlayer::EnterTurnBasedMode() {
 	if (hud) {
 		// turn-based system gui becomes visible
 		hud->HandleNamedEvent("turnBased_modeOn");
-		hud->SetStateString("dialogue_text1", "Player has entered a battle with " + enemyType);
+		hud->SetStateString("dialogue_text1", "You entered a battle against " + enemyType);
 	}
 
 	// ensures player takes action first 
@@ -14181,23 +14201,57 @@ void idPlayer::TurnBasedMode() {
 		gameLocal.Printf("Player's turn ended.\n");
 		hud->HandleNamedEvent("playerTurn");
 
-		// clears text on second dialogue box
 		hud->SetStateString("dialogue_text2", "");
 
 		if (playerChoice == 1) {
 			hud->SetStateString("dialogue_text1", "Player Chose to Act");
 		}
 		else if (playerChoice == 2) {
-			hud->SetStateString("dialogue_text1", "Player Chose to Block");
+			hud->SetStateString("dialogue_text1", "You chose to block next attack.");
+			blockAttack = true;
 		}
 		else if (playerChoice == 3) {
-			hud->SetStateString("dialogue_text1", "Player Chose to Attack");
+			PlayerAttack();
 		}
 
 		// enemy takes action after processing player's choice
 		enemyTurn = true;
-		EnemyAttack();
 
+		// enables dialogue switching
+		canSwitchDialogue = true;
+		switchToEnemyAttack = true;
+	}
+}
+
+/*
+==============
+idPlayer::EnemyTurn
+
+Handles process of enemy turn
+==============
+*/
+void idPlayer::EnemyTurn() {
+	// checks if it's the enemy's turn to interact
+	if (enemyTurn) {
+		gameLocal.Printf("Enemy's turn, player waits...\n");
+		hud->SetStateString("dialogue_text2", "");
+
+		// checks if player blocks enemy attack; otherwise process enemy attack
+		if (blockAttack) {
+			hud->SetStateString("dialogue_text1", enemyType + " attempts an attack but you dodged. You take no damage.");
+			blockAttack = false;
+		} else {
+			EnemyAttack();
+		}
+
+		// enemy attacking ends
+		switchToEnemyAttack = false;
+	} else {
+		// ends enemy's turn
+		gameLocal.Printf("Enemy's turn ended\n");
+		hud->SetStateString("dialogue_text1", "");
+		playerTurn = true;
+		canSwitchDialogue = false;
 	}
 }
 
@@ -14205,22 +14259,56 @@ void idPlayer::TurnBasedMode() {
 ==============
 idPlayer::EnemyAttack
 
-Handles process of enemy attack
+Handles calculations for enemy regular, miss, or critical attacks
 ==============
 */
 void idPlayer::EnemyAttack() {
-	
-	// checks if it's the enemy's turn to interact
-	if (enemyTurn) {
-		gameLocal.Printf("Enemy's turn, player waits...\n");
-		hud->SetStateString("dialogue_text1", "Enemy attack");
-		hud->SetStateString("dialogue_text2", "Enemy is attacking");
+	// generates random number between 1 to 100
+	int randNum = (rand() % 100) + 1;
 
-		canSwitchDialogue = true;
-	} else if (nextDialogue) {
-		// ends enemy's turn
-		gameLocal.Printf("Enemy's turn ended\n");
-		hud->SetStateString("dialogue_text1", "");
-		playerTurn = true;
+	// calculate percentages for regular attack
+	int hitChance = 100 - enemyMissChance - enemyCritChance;
+
+	// checks if enemy lands a regular attack
+	if (randNum <= hitChance) {
+		health -= enemyAttackDamage;
+		hud->SetStateString("dialogue_text1", enemyType + " attacks. You take " + enemyAttackDamage + " points in damage.");
+	} else {
+		randNum -= hitChance;
+
+		// checks if enemy miss attack or land a critical attack
+		if (randNum <= enemyMissChance){
+			hud->SetStateString("dialogue_text1", enemyType + " attacks but miss. You take no damage.");
+		} else {
+			int doubleDamage = enemyAttackDamage * 2;
+			health -= doubleDamage;
+			hud->SetStateString("dialogue_text1", enemyType + " attacks and lands a critical hit. You take " + doubleDamage + " points in damage.");
+		}
+	}
+}
+
+/*
+==============
+idPlayer::PlayerAttack
+
+Handles calculations for player regular or critical attacks
+==============
+*/
+void idPlayer::PlayerAttack() {
+	// generates random number between 1 to 100
+	int randNum = (rand() % 100) + 1;
+
+	// calculate percentages for regular attack
+	int hitChance = 100 - playerCritChance;
+
+	// checks if enemy lands a regular attack
+	if (randNum <= hitChance) {
+		enemyHealth -= playerAttackDamage;
+		hud->SetStateString("dialogue_text1", "You attack. " + enemyType + " takes " + playerAttackDamage + " points in damage.");
+	}
+	else {
+		int doubleDamage = playerAttackDamage * 2;
+		enemyHealth -= doubleDamage;
+		hud->SetStateString("dialogue_text1", "You attack and land a critical hit. " + enemyType + " takes " + doubleDamage + " points in damage.");
 	}
 }

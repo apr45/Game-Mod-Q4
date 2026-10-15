@@ -429,21 +429,35 @@ public:
 // RITUAL END
 
 	// ---------------------------------------------- custom properties ----------------------------------------------
-	bool					initialHealthSet;	// flag for standard baseline health setup
+	bool					initialHealthSet;		// flag for standard baseline health setup
 
-	idStr					enemyType;			// tracks type of enemy that player encounter
+	// enemy stats
+		idStr					enemyType;
+		int						enemyHealth;
+		int						enemyAttackDamage;
+		int						enemyMissChance;
+		int						enemyCritChance;
 
-	bool					isTurnBasedMode;	// checks whether gameplay is set on turn-based mode
-	int						turnBasedRound;		// tracks the number of cycles of play during turn-based mode
+	// player stats
+		int						playerAttackDamage;	// temp
+		int						playerCritChance;
 
-	bool					playerTurn;			// flag for player's turn
-	bool					enemyTurn;			// flag for enemy's turn
+	bool					isTurnBasedMode;		// checks whether gameplay is set on turn-based mode
+	int						turnBasedRound;			// tracks the number of cycles of play during turn-based mode
 
-	bool					canPlayerChoose;	// flag to enable player to choose interaction option
-	int						playerChoice;		// tracks player's choice during turn-based interaction
+	// turn-based turns 
+		bool					playerTurn;
+		bool					enemyTurn;			
 
-	bool					canSwitchDialogue;	// checks if player can move to next dialogue
-	bool					nextDialogue;		// flag to enable dialogue switching
+	bool					canPlayerChoose;		// flag to enable player to choose interaction option
+	int						playerChoice;			// tracks player's choice during turn-based interaction
+
+	bool					canSwitchDialogue;		// checks if player can move to next dialogue
+	bool					nextDialogue;			// flag to enable dialogue switching
+
+	bool					blockAttack;			// flag to track blocking state
+
+	bool					switchToEnemyAttack;	// flag to enable enemy attack
 	// ---------------------------------------------- custom properties ----------------------------------------------
 
 public:
@@ -818,9 +832,16 @@ public:
 // RITUAL END
 // 
 	// ---------------------------------------------- custom functions ----------------------------------------------
-	void					EnterTurnBasedMode();		// set up inital state of turn-based system
-	void					TurnBasedMode();			// manages turn-based system
-	void					EnemyAttack();				// manages enemy attack during their turn
+	// turn-based system functions
+		void					EnterTurnBasedMode();
+		void					TurnBasedMode();
+
+	// enemy turn functions
+		void					EnemyTurn();
+		void					EnemyAttack();
+
+	// player turn functions
+		void					PlayerAttack();
 	// ---------------------------------------------- custom functions ----------------------------------------------
 
 protected:

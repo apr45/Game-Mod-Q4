@@ -3025,11 +3025,16 @@ void Cmd_nextDialogue_f(const idCmdArgs& args) {
 
 	// enable next dialogue
 	if (player->canSwitchDialogue) {
-		player->nextDialogue = true;
 		
+		// checks if its enemy's turn
 		if (player->enemyTurn) {
-			player->enemyTurn = false;
-			player->EnemyAttack();
+
+			if (!player->switchToEnemyAttack) {
+				//player->nextDialogue = true;
+				player->enemyTurn = false;
+			}
+
+			player->EnemyTurn();
 		}
 	}
 }
