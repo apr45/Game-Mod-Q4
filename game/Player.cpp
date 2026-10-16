@@ -2952,7 +2952,7 @@ void idPlayer::SpawnToPoint( const idVec3 &spawn_origin, const idAngles &spawn_a
 
 // RITUAL BEGIN
 // squirrel: Mode-agnostic buymenus
-	if( gameLocal.isMultiplayer && gameLocal.mpGame.IsBuyingAllowedInTheCurrentGameMode() )
+	if (gameLocal.isMultiplayer && gameLocal.mpGame.IsBuyingAllowedInTheCurrentGameMode())
 	{
 		// restore previous weapons
 		inventory.weapons |= inventory.carryOverWeapons & CARRYOVER_WEAPONS_MASK;
@@ -9714,8 +9714,8 @@ void idPlayer::Think( void ) {
 		}
 	}
 
-	if ( !inBuyZonePrev )
-		inBuyZone = false;
+	if ( true ) // if ( !inBuyZonePrev ) 
+		inBuyZone = true;
 
 	inBuyZonePrev = false;
 }
