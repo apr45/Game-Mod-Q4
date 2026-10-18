@@ -2924,7 +2924,8 @@ void Cmd_AddIcon_f( const idCmdArgs& args ) {
 // squirrel: Mode-agnostic buymenus
 void Cmd_ToggleBuyMenu_f( const idCmdArgs& args ) {
 	idPlayer* player = gameLocal.GetLocalPlayer();
-	if ( player && player->CanBuy() )
+
+	if (player && player->CanBuy())
 	{
 		gameLocal.mpGame.OpenLocalBuyMenu();
 	}
@@ -2958,7 +2959,101 @@ void Cmd_helpScreenExit_f(const idCmdArgs& args) {
 	}
 }
 
-// ---------------------------------------------- custom commands ----------------------------------------------
+// act interaction
+void Cmd_actChoice_f(const idCmdArgs& args) {
+	// pointer to player
+	idPlayer* player = gameLocal.GetLocalPlayer();
+
+	// checks if it is player's turn
+	if (player->canPlayerChoose) {
+		// tracks player choice to act
+		gameLocal.Printf("Player Chose to Act\n");
+		player->playerChoice = 1;
+
+		// ends player's turn
+		player->canPlayerChoose = false;
+		player->playerTurn = false;
+
+		// calls function to process player's choice
+		player->TurnBasedMode();
+	}
+}
+
+// block interaction
+void Cmd_blockChoice_f(const idCmdArgs& args) {
+	// pointer to player
+	idPlayer* player = gameLocal.GetLocalPlayer();
+
+	// checks if it is player's turn
+	if (player->canPlayerChoose) {
+		// tracks player choice to block
+		gameLocal.Printf("Player Chose to Block\n");
+		player->playerChoice = 2;
+
+		// ends player's turn
+		player->canPlayerChoose = false;
+		player->playerTurn = false;
+
+		// calls function to process player's choice
+		player->TurnBasedMode();
+	}
+}
+
+// attack interaction
+void Cmd_attackChoice_f(const idCmdArgs& args) {
+	// pointer to player
+	idPlayer* player = gameLocal.GetLocalPlayer();
+
+	// checks if it is player's turn
+	if (player->canPlayerChoose) {
+		// tracks player choice to attack
+		gameLocal.Printf("Player Chose to Attack\n");
+		player->playerChoice = 3;
+
+		// ends player's turn
+		player->canPlayerChoose = false;
+		player->playerTurn = false;
+
+		// calls function to process player's choice
+		player->TurnBasedMode();
+	}
+}
+
+// handles dialogue switching
+void Cmd_nextDialogue_f(const idCmdArgs& args) {
+	// pointer to player
+	idPlayer* player = gameLocal.GetLocalPlayer();
+
+	// enable next dialogue
+	if (player->canSwitchDialogue) {
+		
+		// checks if its enemy's turn
+		if (player->enemyTurn) {
+
+			if (!player->switchToEnemyAttack) {
+				//player->nextDialogue = true;
+				player->enemyTurn = false;
+			}
+
+			player->EnemyTurn();
+		}
+	}
+}
+
+// enables or disable shop menu
+void Cmd_toggleShopMenu_f(const idCmdArgs& args) {
+	// pointer to player
+	idPlayer* player = gameLocal.GetLocalPlayer();
+
+	// checks if player pointer isn't null
+	if (player && player->hud) {
+		player->hud->HandleNamedEvent("shopMenu");
+	}
+	else {
+		gameLocal.Printf("Player not found\n");
+	}
+}
+// -------------------------------------- custom commands ----------------------------------------------
 
 // RITUAL END
 
@@ -3254,8 +3349,16 @@ void idGameLocal::InitConsoleCommands( void ) {
 	cmdSystem->AddCommand( "buy",					Cmd_BuyItem_f,				CMD_FL_GAME,				"Buy an item (if in a buy zone and the game type supports it)" );
 // RITUAL END
 
-//custom commands
-cmdSystem->AddCommand("helpScreenExit", Cmd_helpScreenExit_f, CMD_FL_GAME, "Turns off visibility of help screen");
+	// ---------------------------------------------- custom commands ----------------------------------------------
+	cmdSystem->AddCommand("helpScreenExit", Cmd_helpScreenExit_f, CMD_FL_GAME, "Turns off visibility of help screen");
+
+	cmdSystem->AddCommand("actChoice", Cmd_actChoice_f, CMD_FL_GAME, "Trigger act interactions");
+	cmdSystem->AddCommand("blockChoice", Cmd_blockChoice_f, CMD_FL_GAME, "Trigger block interactions");
+	cmdSystem->AddCommand("attackChoice", Cmd_attackChoice_f, CMD_FL_GAME, "Trigger attack interactions");
+
+	cmdSystem->AddCommand("nextDialogue", Cmd_nextDialogue_f, CMD_FL_GAME, "Switches to next dialogue");
+
+	cmdSystem->AddCommand("shopMenu", Cmd_toggleShopMenu_f, CMD_FL_GAME, "Toggle shop menu");
 }
 
 /*

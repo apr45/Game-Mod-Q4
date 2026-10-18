@@ -353,6 +353,9 @@ public:
 
 	idStr				GetLastColorCode( void ) const;
 
+		// cleans up enemy name
+		static idStr		EnemyNameCleanUp(idStr enemyType);
+
 protected:
 	int					len;
 	char *				data;

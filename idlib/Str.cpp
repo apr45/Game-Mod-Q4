@@ -2230,3 +2230,37 @@ idStr idStr::GetLastColorCode( void ) const {
 
 	return "";
 } 
+
+
+/*
+================
+idStr::EnemyNameCleanUp
+
+Modifies enemy name into a proper format
+================
+*/
+idStr idStr::EnemyNameCleanUp(idStr enemyType) {
+	char c;
+	idStr enemyName;
+
+	// loops through enemy type string by characters
+	for (int i = 0; i < enemyType.Length(); i++){
+		c = enemyType[i];
+
+		// skips adding character to new name string if it is a number
+		if (isdigit(c)) {
+			continue;
+		} else if (c == '_'){
+			// replaces underscorce with space unless it is the last underscore on string
+			if (i == enemyType.Length() - 1) {
+				continue;
+			}
+			enemyName.Append(' ');
+		} else {
+			enemyName.Append(c);
+		}
+	}
+
+	// returns formatted enemy name
+	return enemyName;
+}

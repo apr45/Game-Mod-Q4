@@ -428,6 +428,38 @@ public:
 	float					buyMenuCash;
 // RITUAL END
 
+	// ---------------------------------------------- custom properties ----------------------------------------------
+	bool					initialHealthSet;		// flag for standard baseline health setup
+
+	// enemy stats
+		idStr					enemyType;
+		int						enemyHealth;
+		int						enemyAttackDamage;
+		int						enemyMissChance;
+		int						enemyCritChance;
+
+	// player stats
+		int						playerAttackDamage;	// temp
+		int						playerCritChance;
+
+	bool					isTurnBasedMode;		// checks whether gameplay is set on turn-based mode
+	int						turnBasedRound;			// tracks the number of cycles of play during turn-based mode
+
+	// turn-based turns 
+		bool					playerTurn;
+		bool					enemyTurn;			
+
+	bool					canPlayerChoose;		// flag to enable player to choose interaction option
+	int						playerChoice;			// tracks player's choice during turn-based interaction
+
+	bool					canSwitchDialogue;		// checks if player can move to next dialogue
+	bool					nextDialogue;			// flag to enable dialogue switching
+
+	bool					blockAttack;			// flag to track blocking state
+
+	bool					switchToEnemyAttack;	// flag to enable enemy attack
+	// ---------------------------------------------- custom properties ----------------------------------------------
+
 public:
 	CLASS_PROTOTYPE( idPlayer );
 
@@ -798,6 +830,19 @@ public:
 	void					SetCash( float newCashAmount );
 	void					ResetCash();
 // RITUAL END
+// 
+	// ---------------------------------------------- custom functions ----------------------------------------------
+	// turn-based system functions
+		void					EnterTurnBasedMode();
+		void					TurnBasedMode();
+
+	// enemy turn functions
+		void					EnemyTurn();
+		void					EnemyAttack();
+
+	// player turn functions
+		void					PlayerAttack();
+	// ---------------------------------------------- custom functions ----------------------------------------------
 
 protected:
 	void					SetupHead( const char* modelKeyName = "", idVec3 headOffset = idVec3(0, 0, 0) );
