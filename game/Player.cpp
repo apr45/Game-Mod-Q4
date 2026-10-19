@@ -1559,34 +1559,35 @@ void idPlayer::Init( void ) {
 
 	isTurnBasedMode = false; // ensures gameplay starts regularly; not in turn-based mode
 
-	// sets up inital turn state
-		playerTurn = false; 
-		enemyTurn = false;
-		isPlayerActing = false;
+	// sets up initial turn state
+	playerTurn = false;
+	enemyTurn = false;
+	isPlayerActing = false;
 
 	turnBasedRound = 0; // resets cycle tracker
 
 	// sets up initial state of turn-based actions
-		allowPlayerInput = false;
-		canSwitchDialogue = false;
-		blockAttack = false;
-		switchToEnemyAttack = false;
-		expLevelTotal = 10;
+	allowPlayerInput = false;
+	canSwitchDialogue = false;
+	blockAttack = false;
+	switchToEnemyAttack = false;
+	expLevelTotal = 10;
 
 	// sets up values for enemy stats
-		enemyAttackDamage = 5; 
-		enemyMissChance = 10;
-		enemyCritChance = 10;
-		isEnemyPoisoned = false;
+	enemyAttackDamage = 5;
+	enemyMissChance = 10;
+	enemyCritChance = 10;
+	isEnemyPoisoned = false;
 
 	// sets up values for player stats
-		playerAttackDamage = 5;
-		playerCritChance = 25;
-		playerHealAmount = 10;
-		playerAcidDamage = 5;
-		playerExpAmount = 0;
-		playerCreditsAmount = 0;
-		playerExpLevel = 0;
+	playerAttackDamage = 5;
+	playerCritChance = 25;
+	playerHealAmount = 10;
+	playerAcidDamage = 5;
+	playerExpAmount = 0;
+	playerCreditsAmount = 0;
+	playerExpLevel = 0;
+	// --------------------------
 	// ---------------------------------------------- custom properties ----------------------------------------------
 
 
@@ -2958,7 +2959,7 @@ void idPlayer::SpawnToPoint( const idVec3 &spawn_origin, const idAngles &spawn_a
 
 // RITUAL BEGIN
 // squirrel: Mode-agnostic buymenus
-	if( gameLocal.isMultiplayer && gameLocal.mpGame.IsBuyingAllowedInTheCurrentGameMode() )
+	if (gameLocal.isMultiplayer && gameLocal.mpGame.IsBuyingAllowedInTheCurrentGameMode())
 	{
 		// restore previous weapons
 		inventory.weapons |= inventory.carryOverWeapons & CARRYOVER_WEAPONS_MASK;
@@ -9214,18 +9215,27 @@ void idPlayer::UpdateHud( void ) {
 	}
 
 	// FIXME: this is here for level ammo balancing to see pct of hits 
-	hud->SetStateInt( "g_showProjectilePct", g_showProjectilePct.GetInteger() );
+	/*hud->SetStateInt("g_showProjectilePct", g_showProjectilePct.GetInteger());
 	if ( numProjectilesFired ) {
 		hud->SetStateString( "projectilepct", va( "Hit %% %.1f", ( (float) numProjectileHits / numProjectilesFired ) * 100 ) );
 	} else {
 		hud->SetStateString( "projectilepct", "Hit % 0.0" );
-	}
+	}*/
 
  	if ( isLagged && gameLocal.isMultiplayer && gameLocal.localClientNum == entityNumber ) {
  		hud->SetStateString( "hudLag", "1" );
  	} else {
  		hud->SetStateString( "hudLag", "0" );
  	}
+
+	// progression update
+		// player
+			idStr lv = "LV: ";
+			hud->SetStateInt("currency_amount_text", playerCreditsAmount);
+			hud->SetStateString("level_text", lv + playerExpLevel);
+			hud->SetStateInt("exp_amount_text", playerExpAmount);
+		// enemy 
+			hud->SetStateInt("enemy_health", enemyHealth);
 }
 
 /*
@@ -9699,7 +9709,11 @@ void idPlayer::Think( void ) {
 				
 				// stores enemy stats that player is fighting against
 				enemyType = enemyType.EnemyNameCleanUp(ent->name);
+				hud->SetStateString("enemy_name", enemyType);
 				enemyHealth = ent->health;
+
+				// showcases enemy stats on hud
+				hud->HandleNamedEvent("enemyStats");
 			
 				// sets flag to freeze player movement
 				freezePlayerMovement = true;
@@ -9720,8 +9734,8 @@ void idPlayer::Think( void ) {
 		}
 	}
 
-	if ( !inBuyZonePrev )
-		inBuyZone = false;
+	if ( true ) // if ( !inBuyZonePrev ) 
+		inBuyZone = true;
 
 	inBuyZonePrev = false;
 }
@@ -14187,7 +14201,7 @@ void idPlayer::EnterTurnBasedMode() {
 
 /*
 ==============
-idPlayer::TurnBasedMode
+idPlayer::PlayerTurn
 
 Handles process of player turn
 ==============
@@ -14203,7 +14217,8 @@ void idPlayer::PlayerTurn() {
 
 		// permits player input to choose
 		allowPlayerInput = true;
-	} else {
+	}
+	else {
 		// disable gui for act, block, and attack choices
 		hud->HandleNamedEvent("playerChoices");
 		hud->SetStateString("dialogue_text2", "");
@@ -14215,17 +14230,19 @@ void idPlayer::PlayerTurn() {
 			// enables gui for act choices
 			hud->HandleNamedEvent("actChoices");
 			hud->SetStateString("dialogue_text2", "Your Choice: ");
-		} else {
+		}
+		else {
 			gameLocal.Printf("Player's turn ended.\n");
 
 			// process player's choice to block or attack; recieves credit and experience
 			if (playerChoice == 2) {
 				hud->SetStateString("dialogue_text1", "You block next attack.");
 				blockAttack = true;
-				
+
 				creditsEarn = 2;
 				expEarn = 5;
-			} else if (playerChoice == 3) {
+			}
+			else if (playerChoice == 3) {
 				PlayerAttack();
 			}
 
@@ -14262,17 +14279,20 @@ void idPlayer::EnemyTurn() {
 		if (blockAttack) {
 			hud->SetStateString("dialogue_text1", enemyType + " attempts an attack but you dodged. You take no damage.");
 			blockAttack = false;
-		} else {
+		}
+		else {
 			EnemyAttack();
 		}
 
 		// enemy attacking ends
 		switchToEnemyAttack = false;
-	} else if (isEnemyPoisoned) {
+	}
+	else if (isEnemyPoisoned) {
 		// enemy health decrease due to being poisoned
 		enemyHealth -= playerAcidDamage;
 		hud->SetStateString("dialogue_text1", enemyType + " takes " + playerAcidDamage + " points in damage due to being poisoned.");
-	} else {
+	}
+	else {
 		// ends enemy's turn
 		gameLocal.Printf("Enemy's turn ended\n");
 		hud->SetStateString("dialogue_text1", "");
@@ -14360,6 +14380,12 @@ void idPlayer::PlayerAction() {
 	// process player's choice to heal, throw acid, or earn double credits; recieves credit and experience
 	if (playerChoice == 1) {
 		health += playerHealAmount;
+
+		// prevents player from healing over health limit
+		if (health > inventory.maxHealth) {
+			health = 100;
+		}
+
 		idStr temp = "";
 		hud->SetStateString("dialogue_text1", temp + "You healed for one turn. You gained " + playerHealAmount + " points back in health.");
 		

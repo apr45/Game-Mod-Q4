@@ -439,11 +439,11 @@ public:
 		bool					enemyTurn;
 
 	// enemy stats
-		idStr					enemyType;
-		int						enemyHealth;
-		int						enemyAttackDamage;
-		int						enemyMissChance;
-		int						enemyCritChance;
+	idStr					enemyType;
+	int						enemyHealth;
+	int						enemyAttackDamage;
+	int						enemyMissChance;
+	int						enemyCritChance;
 
 	// enemy condition
 		bool					isEnemyPoisoned;

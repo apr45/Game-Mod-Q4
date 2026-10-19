@@ -2924,7 +2924,8 @@ void Cmd_AddIcon_f( const idCmdArgs& args ) {
 // squirrel: Mode-agnostic buymenus
 void Cmd_ToggleBuyMenu_f( const idCmdArgs& args ) {
 	idPlayer* player = gameLocal.GetLocalPlayer();
-	if ( player && player->CanBuy() )
+
+	if (player && player->CanBuy())
 	{
 		gameLocal.mpGame.OpenLocalBuyMenu();
 	}
@@ -3044,6 +3045,7 @@ void Cmd_choice3_f(const idCmdArgs& args) {
 	}
 }
 
+
 // handles dialogue switching
 void Cmd_nextDialogue_f(const idCmdArgs& args) {
 	// pointer to player
@@ -3051,7 +3053,7 @@ void Cmd_nextDialogue_f(const idCmdArgs& args) {
 
 	// enables next dialogue
 	if (player->canSwitchDialogue) {
-		
+
 		// checks if its enemy's turn
 		if (player->enemyTurn) {
 
@@ -3066,6 +3068,25 @@ void Cmd_nextDialogue_f(const idCmdArgs& args) {
 			player->isEnemyPoisoned = false;
 			player->EnemyTurn();
 		}
+		else if (player->isEnemyPoisoned) {
+			// enemy no longer poisoned
+			player->isEnemyPoisoned = false;
+			player->EnemyTurn();
+		}
+	}
+}
+
+// enables or disable shop menu
+void Cmd_toggleShopMenu_f(const idCmdArgs& args) {
+	// pointer to player
+	idPlayer* player = gameLocal.GetLocalPlayer();
+
+	// checks if player pointer isn't null
+	if (player && player->hud) {
+		player->hud->HandleNamedEvent("shopMenu");
+	}
+	else {
+		gameLocal.Printf("Player not found\n");
 	}
 }
 // -------------------------------------- custom commands ----------------------------------------------
@@ -3372,6 +3393,8 @@ void idGameLocal::InitConsoleCommands( void ) {
 	cmdSystem->AddCommand("choice3", Cmd_choice3_f, CMD_FL_GAME, "Trigger attack or double credits interactions");
 
 	cmdSystem->AddCommand("nextDialogue", Cmd_nextDialogue_f, CMD_FL_GAME, "Switches to next dialogue");
+
+	cmdSystem->AddCommand("shopMenu", Cmd_toggleShopMenu_f, CMD_FL_GAME, "Toggle shop menu");
 }
 
 /*
