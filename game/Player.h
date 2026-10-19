@@ -431,32 +431,47 @@ public:
 	// ---------------------------------------------- custom properties ----------------------------------------------
 	bool					initialHealthSet;		// flag for standard baseline health setup
 
-	// enemy stats
-		idStr					enemyType;
-		int						enemyHealth;
-		int						enemyAttackDamage;
-		int						enemyMissChance;
-		int						enemyCritChance;
-
-	// player stats
-		int						playerAttackDamage;	// temp
-		int						playerCritChance;
-
 	bool					isTurnBasedMode;		// checks whether gameplay is set on turn-based mode
 	int						turnBasedRound;			// tracks the number of cycles of play during turn-based mode
 
 	// turn-based turns 
-		bool					playerTurn;
-		bool					enemyTurn;			
+	bool					playerTurn;
+	bool					enemyTurn;
 
-	bool					canPlayerChoose;		// flag to enable player to choose interaction option
-	int						playerChoice;			// tracks player's choice during turn-based interaction
+	// enemy stats
+	idStr					enemyType;
+	int						enemyHealth;
+	int						enemyAttackDamage;
+	int						enemyMissChance;
+	int						enemyCritChance;
+
+	// enemy condition
+	bool					isEnemyPoisoned;
+
+	// player stats
+	int						playerAttackDamage;	// temp
+	int						playerCritChance;
+	int						playerHealAmount;
+	int						playerAcidDamage;
+	int						playerCreditsAmount;
+	int						playerExpAmount;
+	int						playerExpLevel;
+
+	// player input
+	bool					allowPlayerInput;
+	int						playerChoice;
+	bool					isPlayerActing;
+
+	// player choice
+	bool					blockAttack;
+	bool					earnDoubleCredits;
+
+	// player credits and experience
+	int						creditsEarn;
+	int						expEarn;
+	int						expLevelTotal;
 
 	bool					canSwitchDialogue;		// checks if player can move to next dialogue
-	bool					nextDialogue;			// flag to enable dialogue switching
-
-	bool					blockAttack;			// flag to track blocking state
-
 	bool					switchToEnemyAttack;	// flag to enable enemy attack
 	// ---------------------------------------------- custom properties ----------------------------------------------
 
@@ -834,14 +849,16 @@ public:
 	// ---------------------------------------------- custom functions ----------------------------------------------
 	// turn-based system functions
 		void					EnterTurnBasedMode();
-		void					TurnBasedMode();
 
 	// enemy turn functions
 		void					EnemyTurn();
 		void					EnemyAttack();
 
 	// player turn functions
+		void					PlayerTurn();
 		void					PlayerAttack();
+		void					PlayerAction();
+		void					PlayerProgression();
 	// ---------------------------------------------- custom functions ----------------------------------------------
 
 protected:
