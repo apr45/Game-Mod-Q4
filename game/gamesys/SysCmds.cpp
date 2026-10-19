@@ -2958,63 +2958,89 @@ void Cmd_helpScreenExit_f(const idCmdArgs& args) {
 	}
 }
 
-// act interaction
-void Cmd_actChoice_f(const idCmdArgs& args) {
+// act or heal interaction
+void Cmd_choice1_f(const idCmdArgs& args) {
 	// pointer to player
 	idPlayer* player = gameLocal.GetLocalPlayer();
 
-	// checks if it is player's turn
-	if (player->canPlayerChoose) {
-		// tracks player choice to act
-		gameLocal.Printf("Player Chose to Act\n");
+	// checks if player input is permitted
+	if (player->allowPlayerInput) {
+		// tracks player input
 		player->playerChoice = 1;
 
-		// ends player's turn
-		player->canPlayerChoose = false;
-		player->playerTurn = false;
+		// checks whether choice is to act or heal
+		if (!player->isPlayerActing) {
+			gameLocal.Printf("Player Chose to Act\n");
+			
+			// process player's choice to act
+			player->isPlayerActing = true;
+			player->PlayerTurn();
+		} else {
+			gameLocal.Printf("Player Chose to Heal\n");
 
-		// calls function to process player's choice
-		player->TurnBasedMode();
+			// process player's choice to heal
+			player->PlayerAction();
+
+			// ends player's turn
+			player->playerTurn = false;
+			player->allowPlayerInput = false;
+		}
 	}
 }
 
-// block interaction
-void Cmd_blockChoice_f(const idCmdArgs& args) {
+// block or acid interaction
+void Cmd_choice2_f(const idCmdArgs& args) {
 	// pointer to player
 	idPlayer* player = gameLocal.GetLocalPlayer();
 
-	// checks if it is player's turn
-	if (player->canPlayerChoose) {
-		// tracks player choice to block
-		gameLocal.Printf("Player Chose to Block\n");
+	// checks if player input is permitted
+	if (player->allowPlayerInput) {
 		player->playerChoice = 2;
 
 		// ends player's turn
-		player->canPlayerChoose = false;
 		player->playerTurn = false;
+		player->allowPlayerInput = false;
 
-		// calls function to process player's choice
-		player->TurnBasedMode();
+		// checks whether choice is to block or throw acid
+		if (!player->isPlayerActing) {
+			gameLocal.Printf("Player Chose to Block\n");
+
+			// process player's choice to block
+			player->PlayerTurn();
+		} else {
+			gameLocal.Printf("Player Chose to Throw Acid\n");
+
+			// process player's choice to acid
+			player->PlayerAction();
+		}
 	}
 }
 
-// attack interaction
-void Cmd_attackChoice_f(const idCmdArgs& args) {
+// attack or double acid interaction
+void Cmd_choice3_f(const idCmdArgs& args) {
 	// pointer to player
 	idPlayer* player = gameLocal.GetLocalPlayer();
 
-	// checks if it is player's turn
-	if (player->canPlayerChoose) {
-		// tracks player choice to attack
-		gameLocal.Printf("Player Chose to Attack\n");
+	// checks if player input is permitted
+	if (player->allowPlayerInput) {
 		player->playerChoice = 3;
 
 		// ends player's turn
-		player->canPlayerChoose = false;
 		player->playerTurn = false;
+		player->allowPlayerInput = false;
 
-		// calls function to process player's choice
-		player->TurnBasedMode();
+		// checks whether choice is to attack or gain double credits
+		if (!player->isPlayerActing) {
+			gameLocal.Printf("Player Chose to Attack\n");
+
+			// process player's choice to attack
+			player->PlayerTurn();
+		} else {
+			gameLocal.Printf("Player Chose to Double Credits\n");
+
+			// process player's choice for double credits
+			player->PlayerAction();
+		}
 	}
 }
 
@@ -3023,17 +3049,21 @@ void Cmd_nextDialogue_f(const idCmdArgs& args) {
 	// pointer to player
 	idPlayer* player = gameLocal.GetLocalPlayer();
 
-	// enable next dialogue
+	// enables next dialogue
 	if (player->canSwitchDialogue) {
 		
 		// checks if its enemy's turn
 		if (player->enemyTurn) {
 
+			// checks if enemy finished attacking
 			if (!player->switchToEnemyAttack) {
-				//player->nextDialogue = true;
 				player->enemyTurn = false;
 			}
 
+			player->EnemyTurn();
+		} else if (player->isEnemyPoisoned){
+			// enemy no longer poisoned
+			player->isEnemyPoisoned = false;
 			player->EnemyTurn();
 		}
 	}
@@ -3337,9 +3367,9 @@ void idGameLocal::InitConsoleCommands( void ) {
 	// ---------------------------------------------- custom commands ----------------------------------------------
 	cmdSystem->AddCommand("helpScreenExit", Cmd_helpScreenExit_f, CMD_FL_GAME, "Turns off visibility of help screen");
 
-	cmdSystem->AddCommand("actChoice", Cmd_actChoice_f, CMD_FL_GAME, "Trigger act interactions");
-	cmdSystem->AddCommand("blockChoice", Cmd_blockChoice_f, CMD_FL_GAME, "Trigger block interactions");
-	cmdSystem->AddCommand("attackChoice", Cmd_attackChoice_f, CMD_FL_GAME, "Trigger attack interactions");
+	cmdSystem->AddCommand("choice1", Cmd_choice1_f, CMD_FL_GAME, "Trigger act or heal interactions");
+	cmdSystem->AddCommand("choice2", Cmd_choice2_f, CMD_FL_GAME, "Trigger block or acid interactions");
+	cmdSystem->AddCommand("choice3", Cmd_choice3_f, CMD_FL_GAME, "Trigger attack or double credits interactions");
 
 	cmdSystem->AddCommand("nextDialogue", Cmd_nextDialogue_f, CMD_FL_GAME, "Switches to next dialogue");
 }

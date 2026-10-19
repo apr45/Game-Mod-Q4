@@ -1555,32 +1555,38 @@ void idPlayer::Init( void ) {
 	// ---------------------------------------------- custom properties ----------------------------------------------
 	initialHealthSet = false; // baseline health has not been set yet
 
-	freezePlayerMovement = false; // player movement has not been frozen
+	freezePlayerMovement = false; // ensures player movement is normal at the beginning
 
-	isTurnBasedMode = false; // gameplay starts regularly; not in turn-based mode
+	isTurnBasedMode = false; // ensures gameplay starts regularly; not in turn-based mode
 
 	// sets up inital turn state
 		playerTurn = false; 
 		enemyTurn = false;
-
+		isPlayerActing = false;
 
 	turnBasedRound = 0; // resets cycle tracker
 
-	// sets up state of turn-based actions
-		canPlayerChoose = false;
+	// sets up initial state of turn-based actions
+		allowPlayerInput = false;
 		canSwitchDialogue = false;
-		nextDialogue = false;
 		blockAttack = false;
 		switchToEnemyAttack = false;
+		expLevelTotal = 10;
 
 	// sets up values for enemy stats
 		enemyAttackDamage = 5; 
 		enemyMissChance = 10;
 		enemyCritChance = 10;
+		isEnemyPoisoned = false;
 
 	// sets up values for player stats
 		playerAttackDamage = 5;
 		playerCritChance = 25;
+		playerHealAmount = 10;
+		playerAcidDamage = 5;
+		playerExpAmount = 0;
+		playerCreditsAmount = 0;
+		playerExpLevel = 0;
 	// ---------------------------------------------- custom properties ----------------------------------------------
 
 
@@ -9707,10 +9713,10 @@ void idPlayer::Think( void ) {
 		}
 	} else if (isTurnBasedMode) {
 		// turn-based loop
-		if (playerTurn && !canPlayerChoose) {
+		if (playerTurn && !allowPlayerInput) {
 			turnBasedRound++;
 			gameLocal.Printf("Loop: %i\n", turnBasedRound);
-			TurnBasedMode(); 
+			PlayerTurn();
 		}
 	}
 
@@ -14183,43 +14189,59 @@ void idPlayer::EnterTurnBasedMode() {
 ==============
 idPlayer::TurnBasedMode
 
-Handles the turned-based interaction between player and enemy
+Handles process of player turn
 ==============
 */
-void idPlayer::TurnBasedMode() {
-	// checks if it's the player's turn to interact
-	if (playerTurn) {
-		// enables choices gui for player
-		hud->HandleNamedEvent("playerTurn");
-		hud->SetStateString("dialogue_text2", "Your Choice: ");
+void idPlayer::PlayerTurn() {
+	// checks for initial state of player's turn
+	if (playerTurn && !isPlayerActing) {
 		gameLocal.Printf("Player's turn, enemy waits...\n");
 
-		// permits player to choose an option 
-		canPlayerChoose = true;
-	} else {
-		// disable choices gui for player
-		gameLocal.Printf("Player's turn ended.\n");
-		hud->HandleNamedEvent("playerTurn");
+		// enables gui for act, block, and attack choices
+		hud->HandleNamedEvent("playerChoices");
+		hud->SetStateString("dialogue_text2", "Your Choice: ");
 
+		// permits player input to choose
+		allowPlayerInput = true;
+	} else {
+		// disable gui for act, block, and attack choices
+		hud->HandleNamedEvent("playerChoices");
 		hud->SetStateString("dialogue_text2", "");
 
-		if (playerChoice == 1) {
-			hud->SetStateString("dialogue_text1", "Player Chose to Act");
-		}
-		else if (playerChoice == 2) {
-			hud->SetStateString("dialogue_text1", "You chose to block next attack.");
-			blockAttack = true;
-		}
-		else if (playerChoice == 3) {
-			PlayerAttack();
-		}
+		// checks if player chose to act;
+		if (playerChoice == 1 && isPlayerActing) {
+			hud->SetStateString("dialogue_text1", "You chose to act.");
 
-		// enemy takes action after processing player's choice
-		enemyTurn = true;
+			// enables gui for act choices
+			hud->HandleNamedEvent("actChoices");
+			hud->SetStateString("dialogue_text2", "Your Choice: ");
+		} else {
+			gameLocal.Printf("Player's turn ended.\n");
 
-		// enables dialogue switching
-		canSwitchDialogue = true;
-		switchToEnemyAttack = true;
+			// process player's choice to block or attack; recieves credit and experience
+			if (playerChoice == 2) {
+				hud->SetStateString("dialogue_text1", "You block next attack.");
+				blockAttack = true;
+				
+				creditsEarn = 2;
+				expEarn = 5;
+			} else if (playerChoice == 3) {
+				PlayerAttack();
+			}
+
+			// resets player choice
+			playerChoice = 0;
+
+			// calculates credits earned 
+			PlayerProgression();
+
+			// enemy takes action after processing player's choice
+			enemyTurn = true;
+
+			// enables dialogue switching
+			canSwitchDialogue = true;
+			switchToEnemyAttack = true;
+		}
 	}
 }
 
@@ -14246,6 +14268,10 @@ void idPlayer::EnemyTurn() {
 
 		// enemy attacking ends
 		switchToEnemyAttack = false;
+	} else if (isEnemyPoisoned) {
+		// enemy health decrease due to being poisoned
+		enemyHealth -= playerAcidDamage;
+		hud->SetStateString("dialogue_text1", enemyType + " takes " + playerAcidDamage + " points in damage due to being poisoned.");
 	} else {
 		// ends enemy's turn
 		gameLocal.Printf("Enemy's turn ended\n");
@@ -14272,7 +14298,7 @@ void idPlayer::EnemyAttack() {
 	// checks if enemy lands a regular attack
 	if (randNum <= hitChance) {
 		health -= enemyAttackDamage;
-		hud->SetStateString("dialogue_text1", enemyType + " attacks. You take " + enemyAttackDamage + " points in damage.");
+		hud->SetStateString("dialogue_text1", enemyType + " attacks. You take " + enemyAttackDamage + " points in damage." );
 	} else {
 		randNum -= hitChance;
 
@@ -14280,6 +14306,7 @@ void idPlayer::EnemyAttack() {
 		if (randNum <= enemyMissChance){
 			hud->SetStateString("dialogue_text1", enemyType + " attacks but miss. You take no damage.");
 		} else {
+			// enemy attack does double damage at critical success
 			int doubleDamage = enemyAttackDamage * 2;
 			health -= doubleDamage;
 			hud->SetStateString("dialogue_text1", enemyType + " attacks and lands a critical hit. You take " + doubleDamage + " points in damage.");
@@ -14301,14 +14328,112 @@ void idPlayer::PlayerAttack() {
 	// calculate percentages for regular attack
 	int hitChance = 100 - playerCritChance;
 
-	// checks if enemy lands a regular attack
+	// checks if enemy lands a regular attack; earns credits and experience based on type of attack
 	if (randNum <= hitChance) {
 		enemyHealth -= playerAttackDamage;
 		hud->SetStateString("dialogue_text1", "You attack. " + enemyType + " takes " + playerAttackDamage + " points in damage.");
-	}
-	else {
+
+		creditsEarn = 5;
+		expEarn = 5;
+	} else {
 		int doubleDamage = playerAttackDamage * 2;
 		enemyHealth -= doubleDamage;
 		hud->SetStateString("dialogue_text1", "You attack and land a critical hit. " + enemyType + " takes " + doubleDamage + " points in damage.");
+
+		creditsEarn = 10;
+		expEarn = 2;
+	}
+}
+
+/*
+==============
+idPlayer::PlayerAction
+
+Handles the process for player actions
+==============
+*/
+void idPlayer::PlayerAction() {
+	// disables gui for act choices
+	hud->HandleNamedEvent("actChoices");
+	hud->SetStateString("dialogue_text2", "");
+
+	// process player's choice to heal, throw acid, or earn double credits; recieves credit and experience
+	if (playerChoice == 1) {
+		health += playerHealAmount;
+		idStr temp = "";
+		hud->SetStateString("dialogue_text1", temp + "You healed for one turn. You gained " + playerHealAmount + " points back in health.");
+		
+		creditsEarn = 2;
+		expEarn = 5;
+	} else if (playerChoice == 2){
+		isEnemyPoisoned = true;
+		hud->SetStateString("dialogue_text1", "You threw a bottle of acid. " + enemyType + " is poisoned for one turn.");
+		
+		creditsEarn = 5;
+		expEarn = 2;
+	} else if (playerChoice == 3){
+		earnDoubleCredits = true;
+		hud->SetStateString("dialogue_text1", "You will earned double amount of credits next turn.");
+
+		creditsEarn = 0;
+		expEarn = 10;
+	}
+
+	// resets player choice
+	if (playerChoice != 3) {
+		playerChoice = 0;
+	}
+
+	// calculates credits earned 
+	PlayerProgression();
+
+	// disables player input for act choices
+	isPlayerActing = false;
+
+	// enemy takes action after processing player's choice
+	enemyTurn = true;
+
+	// enables dialogue switching
+	canSwitchDialogue = true;
+	switchToEnemyAttack = true;
+}
+
+/*
+==============
+idPlayer::PlayerProgression
+
+Handles the process for earning credits and experience points
+==============
+*/
+void idPlayer::PlayerProgression() {
+	// check for a double credit effect
+	if (earnDoubleCredits && playerChoice != 3) {
+		creditsEarn *= 2;
+		earnDoubleCredits = false;
+
+		// resets player choice
+		playerChoice = 0;
+	}
+
+	// add credits and experience points to player's current amount
+	playerCreditsAmount += creditsEarn;
+	playerExpAmount += expEarn;
+
+	// checks if experience points exceeds current level limit
+	if (playerExpAmount >= expLevelTotal) {
+		// level up by one
+		playerExpLevel++;
+
+		// resets experience points
+		playerExpAmount = 0;
+
+		// new level limit
+		expLevelTotal += 25;
+
+		idStr temp = "";
+		hud->SetStateString("dialogue_text2", temp + "You earned " + creditsEarn + " credits and " + expEarn + " experience. You leveled up.");
+	}else {
+		idStr temp = "";
+		hud->SetStateString("dialogue_text2", temp + "You earned " + creditsEarn + " credits and " + expEarn + " experience.");
 	}
 }
