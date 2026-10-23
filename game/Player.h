@@ -458,10 +458,13 @@ public:
 		int						playerCreditsAmount;
 		int						playerExpAmount;
 		int						playerExpLevel;
+		bool					isPlayerShieldOn;
+		bool					earnDoubleExp;
 
 	// player input
 		bool					allowPlayerInput;
 		int						playerChoice;
+		int						playerPurchaseChoice;
 		bool					isPlayerActing;	
 
 	// player choice
@@ -475,6 +478,8 @@ public:
 
 	bool					canSwitchDialogue;		// checks if player can move to next dialogue
 	bool					switchToEnemyAttack;	// flag to enable enemy attack
+
+	bool					isShopMenuVisible;
 	// ---------------------------------------------- custom properties ----------------------------------------------
 
 public:
@@ -852,12 +857,12 @@ public:
 	// turn-based system functions
 		void					EnterTurnBasedMode();
 
-	// enemy turn functions
+	// enemy functions
 		void					EnemyTurn();
 		void					EnemyAttack();
 		void					EnemyKilled();
 
-	// player turn functions
+	// player functions
 		void					PlayerTurn();
 		void					PlayerAttack();
 		void					PlayerAction();

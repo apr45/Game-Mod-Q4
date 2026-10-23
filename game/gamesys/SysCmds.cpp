@@ -3082,9 +3082,133 @@ void Cmd_toggleShopMenu_f(const idCmdArgs& args) {
 	// checks if player pointer isn't null
 	if (player && player->hud) {
 		player->hud->HandleNamedEvent("shopMenu");
-	}
-	else {
+
+		// checks if shop is opened or not
+		if (player->hud->GetStateInt("shopMenu_equip") == 1) {
+			player->isShopMenuVisible = true;
+		} else {
+			player->isShopMenuVisible = false;
+		}
+	} else {
 		gameLocal.Printf("Player not found\n");
+	}
+}
+
+// view shield info and select shield equipment
+void Cmd_shield_f(const idCmdArgs& args) {
+	// pointer to player
+	idPlayer* player = gameLocal.GetLocalPlayer();
+
+	// checks if shop is visible
+	if (player->isShopMenuVisible) {
+		player->playerPurchaseChoice = 4;
+	}
+}
+
+// view healing amulet info and select healing amulet equipment
+void Cmd_healingAmulet_f(const idCmdArgs& args) {
+	// pointer to player
+	idPlayer* player = gameLocal.GetLocalPlayer();
+
+	// checks if shop is visible
+	if (player->isShopMenuVisible) {
+		player->playerPurchaseChoice = 5;
+	}
+}
+
+// view lucky dice info and select lucky dice equipment
+void Cmd_luckyDice_f(const idCmdArgs& args) {
+	// pointer to player
+	idPlayer* player = gameLocal.GetLocalPlayer();
+
+	// checks if shop is visible
+	if (player->isShopMenuVisible) {
+		player->playerPurchaseChoice = 6;
+	}
+}
+
+// view experience ring info and select experience ring equipment
+void Cmd_experienceRing_f(const idCmdArgs& args) {
+	// pointer to player
+	idPlayer* player = gameLocal.GetLocalPlayer();
+
+	// checks if shop is visible
+	if (player->isShopMenuVisible) {
+		player->playerPurchaseChoice = 7;
+	}
+}
+
+// view venom potion info and select venon potion equipment
+void Cmd_venomPotion_f(const idCmdArgs& args) {
+	// pointer to player
+	idPlayer* player = gameLocal.GetLocalPlayer();
+
+	// checks if shop is visible
+	if (player->isShopMenuVisible) {
+		player->playerPurchaseChoice = 8;
+	}
+}
+
+// confirms purchase of equipment
+void Cmd_confirm_f(const idCmdArgs& args) {
+	// pointer to player
+	idPlayer* player = gameLocal.GetLocalPlayer();
+
+	// checks if shop is visible
+	if (player->isShopMenuVisible) {
+
+		// checks if player can purchase shield equipment
+		if (player->playerPurchaseChoice == 4 && player->playerCreditsAmount >= 5) {
+			// player takes less enemy attack damage
+			gameLocal.Printf("Shield Brought\n");
+			player->isPlayerShieldOn = true;
+			player->playerCreditsAmount -= 5;
+		} else {
+			gameLocal.Printf("Can't purchase shield\n");
+		}
+
+		// checks if player can purchase healing amulet equipment
+		if (player->playerPurchaseChoice == 5 && player->playerCreditsAmount >= 5) {
+			// increase healing
+			gameLocal.Printf("Healing Amulet Brought\n");
+			player->playerHealAmount += 10;
+			player->playerCreditsAmount -= 5;
+		}
+		else {
+			gameLocal.Printf("Can't purchase healing amulet\n");
+		}
+
+		// checks if player can purchase lucky dice equipment
+		if (player->playerPurchaseChoice == 6 && player->playerCreditsAmount >= 5) {
+			// increase player critical chance percentage
+			gameLocal.Printf("Lucky Dice Brought\n");
+			player->playerCritChance += 10;
+			player->playerCreditsAmount -= 5;
+		} else {
+			gameLocal.Printf("Can't purchase lucky dice\n");
+		}
+
+		// checks if player can purchase experience ring equipment
+		if (player->playerPurchaseChoice == 7 && player->playerCreditsAmount >= 5) {
+			// increase experience earned
+			gameLocal.Printf("Experience Ring Brought\n");
+			player->earnDoubleExp = true;
+			player->playerCreditsAmount -= 5;
+		}
+		else {
+			gameLocal.Printf("Can't purchase experience ring\n");
+		}
+
+		// checks if player can purchase venom potion equipment
+		if (player->playerPurchaseChoice == 8 && player->playerCreditsAmount >= 5) {
+			// increase acid damage
+			gameLocal.Printf("Venom Potion Brought\n");
+			player->playerAcidDamage += 5;
+			player->playerCreditsAmount -= 5;
+		}
+		else {
+			gameLocal.Printf("Can't purchase venom potion\n");
+		}
 	}
 }
 // -------------------------------------- custom commands ----------------------------------------------
@@ -3393,6 +3517,13 @@ void idGameLocal::InitConsoleCommands( void ) {
 	cmdSystem->AddCommand("nextDialogue", Cmd_nextDialogue_f, CMD_FL_GAME, "Switches to next dialogue");
 
 	cmdSystem->AddCommand("shopMenu", Cmd_toggleShopMenu_f, CMD_FL_GAME, "Toggle shop menu");
+
+	cmdSystem->AddCommand("shield", Cmd_shield_f, CMD_FL_GAME, "Showcase information on shield equipment");
+	cmdSystem->AddCommand("healingAmulet", Cmd_healingAmulet_f, CMD_FL_GAME, "Showcase information on healing amulet");
+	cmdSystem->AddCommand("luckyDice", Cmd_luckyDice_f, CMD_FL_GAME, "Showcase information on lucky dice equipment");
+	cmdSystem->AddCommand("experienceRing", Cmd_experienceRing_f, CMD_FL_GAME, "Showcase information on experience ring equipment");
+	cmdSystem->AddCommand("venomPotion", Cmd_venomPotion_f, CMD_FL_GAME, "Showcase information on venom potion equipment");
+	cmdSystem->AddCommand("confirm", Cmd_confirm_f, CMD_FL_GAME, "Confirms player's purchase of specific equipment");
 }
 
 /*

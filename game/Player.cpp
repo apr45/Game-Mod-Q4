@@ -1559,6 +1559,8 @@ void idPlayer::Init( void ) {
 
 	isTurnBasedMode = false; // ensures gameplay starts regularly; not in turn-based mode
 
+	isShopMenuVisible = false; // initial state of shop is invisibile 
+
 	// sets up initial turn state
 	playerTurn = false;
 	enemyTurn = false;
@@ -1581,13 +1583,15 @@ void idPlayer::Init( void ) {
 	isEnemyKilled = false;
 
 	// sets up values for player stats
-	playerAttackDamage = 50;
-	playerCritChance = 25;
+	playerAttackDamage = 5;
+	playerCritChance = 10;
 	playerHealAmount = 10;
 	playerAcidDamage = 5;
 	playerExpAmount = 0;
 	playerCreditsAmount = 0;
 	playerExpLevel = 0;
+	isPlayerShieldOn = false;
+	earnDoubleExp = false;
 	// ---------------------------------------------- custom properties ----------------------------------------------
 
 
@@ -14315,8 +14319,20 @@ void idPlayer::EnemyAttack() {
 
 	// checks if enemy lands a regular attack
 	if (randNum <= hitChance) {
-		health -= enemyAttackDamage;
-		hud->SetStateString("dialogue_text1", enemyType + "attacks. You take " + enemyAttackDamage + " points in damage." );
+		// checks if player has sheild equipment
+		if (isPlayerShieldOn) {
+			// calculates new enemy attack damage based on defense percentage
+			int damageDecrease = enemyAttackDamage * 0.2;
+			int newEnemyAttackDamage = enemyAttackDamage - damageDecrease;
+
+			// decreases player health with lower damage
+			health -= newEnemyAttackDamage;
+			hud->SetStateString("dialogue_text1", enemyType + "attacks. You take " + newEnemyAttackDamage + " points in damage.");
+		} else {
+			// decreases player health with regular damage
+			health -= enemyAttackDamage;
+			hud->SetStateString("dialogue_text1", enemyType + "attacks. You take " + enemyAttackDamage + " points in damage.");
+		}
 	} else {
 		randNum -= hitChance;
 
@@ -14326,8 +14342,21 @@ void idPlayer::EnemyAttack() {
 		} else {
 			// enemy attack does double damage at critical success
 			int doubleDamage = enemyAttackDamage * 2;
-			health -= doubleDamage;
-			hud->SetStateString("dialogue_text1", enemyType + "attacks and lands a critical hit. You take " + doubleDamage + " points in damage.");
+
+			// checks if player has sheild equipment
+			if (isPlayerShieldOn) {
+				// calculates new enemy attack damage based on defense percentage
+				int damageDecrease = doubleDamage * 0.2;
+				int newEnemyAttackDamage = doubleDamage - damageDecrease;
+
+				// decreases player health with lower damage
+				health -= newEnemyAttackDamage;
+				hud->SetStateString("dialogue_text1", enemyType + "attacks and lands a critical hit. You take " + newEnemyAttackDamage + " points in damage.");
+			} else {
+				// decreases player health with double damage
+				health -= doubleDamage;
+				hud->SetStateString("dialogue_text1", enemyType + "attacks and lands a critical hit. You take " + doubleDamage + " points in damage.");
+			}
 		}
 	}
 }
@@ -14426,13 +14455,18 @@ Handles the process for earning credits and experience points
 ==============
 */
 void idPlayer::PlayerProgression() {
-	// check for a double credit effect
+	// checks for a double credit effect
 	if (earnDoubleCredits && playerChoice != 3) {
 		creditsEarn *= 2;
 		earnDoubleCredits = false;
 
 		// resets player choice
 		playerChoice = 0;
+	}
+
+	// checks if player has ring to earn double experience
+	if (earnDoubleExp) {
+		expEarn *= 2;
 	}
 
 	// add credits and experience points to player's current amount
