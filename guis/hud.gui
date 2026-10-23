@@ -496,25 +496,6 @@ windowDef Desktop
 		}
 	}
 
-<<<<<<< Updated upstream
-=======
-	onNamedEvent actChoices {
-		if ("actChoices::visible" == 0) {
-			set "actChoices::visible" "1";
-		} else {
-			set "actChoices::visible" "0";
-		}
-	}
-
-	onNamedEvent shopMenu {
-		if ("shopMenu_equip::visible" == 0) {
-			set "shopMenu_equip::visible" "1";
-		} else {
-			set "shopMenu_equip::visible" "0";
-		}
-	}
-
->>>>>>> Stashed changes
 	windowDef speed
 	{
 		rect	550,70,80,20

@@ -439,6 +439,7 @@ public:
 		bool					enemyTurn;
 
 	// enemy stats
+	idActor					*enemy;
 	idStr					enemyType;
 	int						enemyHealth;
 	int						enemyAttackDamage;
@@ -447,6 +448,7 @@ public:
 
 	// enemy condition
 		bool					isEnemyPoisoned;
+		bool					isEnemyKilled;
 
 	// player stats
 		int						playerAttackDamage;	// temp
@@ -853,6 +855,7 @@ public:
 	// enemy turn functions
 		void					EnemyTurn();
 		void					EnemyAttack();
+		void					EnemyKilled();
 
 	// player turn functions
 		void					PlayerTurn();

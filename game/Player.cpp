@@ -1578,16 +1578,16 @@ void idPlayer::Init( void ) {
 	enemyMissChance = 10;
 	enemyCritChance = 10;
 	isEnemyPoisoned = false;
+	isEnemyKilled = false;
 
 	// sets up values for player stats
-	playerAttackDamage = 5;
+	playerAttackDamage = 50;
 	playerCritChance = 25;
 	playerHealAmount = 10;
 	playerAcidDamage = 5;
 	playerExpAmount = 0;
 	playerCreditsAmount = 0;
 	playerExpLevel = 0;
-	// --------------------------
 	// ---------------------------------------------- custom properties ----------------------------------------------
 
 
@@ -9692,7 +9692,7 @@ void idPlayer::Think( void ) {
 
 	// checks for nearby enemies before entering into turn-based mode
 	if (!isTurnBasedMode) {
-		// store enemy entity
+		// temp enemy entity
 		idActor *ent;
 
 		// iterate through a list of active enemies targeting player
@@ -9708,9 +9708,11 @@ void idPlayer::Think( void ) {
 				//gameRenderWorld->DebugBounds(colorRed, ent->GetPhysics()->GetBounds().Expand(2), ent->GetPhysics()->GetOrigin());
 				
 				// stores enemy stats that player is fighting against
+				enemy = ent;
 				enemyType = enemyType.EnemyNameCleanUp(ent->name);
 				hud->SetStateString("enemy_name", enemyType);
 				enemyHealth = ent->health;
+				
 
 				// showcases enemy stats on hud
 				hud->HandleNamedEvent("enemyStats");
@@ -14188,7 +14190,7 @@ void idPlayer::EnterTurnBasedMode() {
 	// checks if hud isn't null
 	if (hud) {
 		// turn-based system gui becomes visible
-		hud->HandleNamedEvent("turnBased_modeOn");
+		hud->HandleNamedEvent("turnBased_mode");
 		hud->SetStateString("dialogue_text1", "You entered a battle against " + enemyType);
 	}
 
@@ -14252,12 +14254,8 @@ void idPlayer::PlayerTurn() {
 			// calculates credits earned 
 			PlayerProgression();
 
-			// enemy takes action after processing player's choice
-			enemyTurn = true;
-
-			// enables dialogue switching
-			canSwitchDialogue = true;
-			switchToEnemyAttack = true;
+			// checks enemy health status
+			EnemyKilled();
 		}
 	}
 }
@@ -14277,7 +14275,7 @@ void idPlayer::EnemyTurn() {
 
 		// checks if player blocks enemy attack; otherwise process enemy attack
 		if (blockAttack) {
-			hud->SetStateString("dialogue_text1", enemyType + " attempts an attack but you dodged. You take no damage.");
+			hud->SetStateString("dialogue_text1", enemyType + "attempts an attack but you dodged. You take no damage.");
 			blockAttack = false;
 		}
 		else {
@@ -14290,7 +14288,7 @@ void idPlayer::EnemyTurn() {
 	else if (isEnemyPoisoned) {
 		// enemy health decrease due to being poisoned
 		enemyHealth -= playerAcidDamage;
-		hud->SetStateString("dialogue_text1", enemyType + " takes " + playerAcidDamage + " points in damage due to being poisoned.");
+		hud->SetStateString("dialogue_text1", enemyType + "takes " + playerAcidDamage + " points in damage due to being poisoned.");
 	}
 	else {
 		// ends enemy's turn
@@ -14318,18 +14316,18 @@ void idPlayer::EnemyAttack() {
 	// checks if enemy lands a regular attack
 	if (randNum <= hitChance) {
 		health -= enemyAttackDamage;
-		hud->SetStateString("dialogue_text1", enemyType + " attacks. You take " + enemyAttackDamage + " points in damage." );
+		hud->SetStateString("dialogue_text1", enemyType + "attacks. You take " + enemyAttackDamage + " points in damage." );
 	} else {
 		randNum -= hitChance;
 
 		// checks if enemy miss attack or land a critical attack
 		if (randNum <= enemyMissChance){
-			hud->SetStateString("dialogue_text1", enemyType + " attacks but miss. You take no damage.");
+			hud->SetStateString("dialogue_text1", enemyType + "attacks but miss. You take no damage.");
 		} else {
 			// enemy attack does double damage at critical success
 			int doubleDamage = enemyAttackDamage * 2;
 			health -= doubleDamage;
-			hud->SetStateString("dialogue_text1", enemyType + " attacks and lands a critical hit. You take " + doubleDamage + " points in damage.");
+			hud->SetStateString("dialogue_text1", enemyType + "attacks and lands a critical hit. You take " + doubleDamage + " points in damage.");
 		}
 	}
 }
@@ -14351,14 +14349,14 @@ void idPlayer::PlayerAttack() {
 	// checks if enemy lands a regular attack; earns credits and experience based on type of attack
 	if (randNum <= hitChance) {
 		enemyHealth -= playerAttackDamage;
-		hud->SetStateString("dialogue_text1", "You attack. " + enemyType + " takes " + playerAttackDamage + " points in damage.");
+		hud->SetStateString("dialogue_text1", "You attack. " + enemyType + "takes " + playerAttackDamage + " points in damage.");
 
 		creditsEarn = 5;
 		expEarn = 5;
 	} else {
 		int doubleDamage = playerAttackDamage * 2;
 		enemyHealth -= doubleDamage;
-		hud->SetStateString("dialogue_text1", "You attack and land a critical hit. " + enemyType + " takes " + doubleDamage + " points in damage.");
+		hud->SetStateString("dialogue_text1", "You attack and land a critical hit. " + enemyType + "takes " + doubleDamage + " points in damage.");
 
 		creditsEarn = 10;
 		expEarn = 2;
@@ -14393,7 +14391,7 @@ void idPlayer::PlayerAction() {
 		expEarn = 5;
 	} else if (playerChoice == 2){
 		isEnemyPoisoned = true;
-		hud->SetStateString("dialogue_text1", "You threw a bottle of acid. " + enemyType + " is poisoned for one turn.");
+		hud->SetStateString("dialogue_text1", "You threw a bottle of acid. " + enemyType + "is poisoned for one turn.");
 		
 		creditsEarn = 5;
 		expEarn = 2;
@@ -14416,12 +14414,8 @@ void idPlayer::PlayerAction() {
 	// disables player input for act choices
 	isPlayerActing = false;
 
-	// enemy takes action after processing player's choice
-	enemyTurn = true;
-
-	// enables dialogue switching
-	canSwitchDialogue = true;
-	switchToEnemyAttack = true;
+	// checks enemy health status
+	EnemyKilled();
 }
 
 /*
@@ -14458,8 +14452,63 @@ void idPlayer::PlayerProgression() {
 
 		idStr temp = "";
 		hud->SetStateString("dialogue_text2", temp + "You earned " + creditsEarn + " credits and " + expEarn + " experience. You leveled up.");
-	}else {
+	} else {
 		idStr temp = "";
 		hud->SetStateString("dialogue_text2", temp + "You earned " + creditsEarn + " credits and " + expEarn + " experience.");
+	}
+}
+
+/*
+==============
+idPlayer::EnemyKilled
+
+Handles the process on dead enemies
+==============
+*/
+void idPlayer::EnemyKilled() {
+	// checks if enemy health reached 0
+	if (enemyHealth < 0 && !isEnemyKilled) {
+		// hides enemy stats
+		hud->HandleNamedEvent("enemyStats");
+
+		// informs player of their win; update credits and experience earned
+		gameLocal.Printf("Player won against enemy.\n");
+		hud->SetStateString("dialogue_text1", enemyType + "dies. You won the battle. You earned 15 credits and 15 experience.");
+		creditsEarn = 15;
+		expEarn = 15;
+		PlayerProgression();
+		hud->SetStateString("dialogue_text2", "");
+		
+		// removes enemy from physical game world
+		delete enemy;
+
+		// enable dialogue switching
+		canSwitchDialogue = true;
+
+		// reset turn based cycle
+		turnBasedRound = 0;
+	} else if (isEnemyKilled) {
+		// disables dialogue switching
+		canSwitchDialogue = false;
+
+		// resets enemy killed status for next enemy
+		isEnemyKilled = false;
+
+		// disables turn-based mode
+		hud->HandleNamedEvent("turnBased_mode");
+		isTurnBasedMode = false;
+
+		// unfreezes player movement
+		freezePlayerMovement = false;
+
+		// enables other enemies to track player
+		Event_EnableTarget();
+	} else {
+		// if enemy still alive, start enemy turn
+		enemyTurn = true;
+
+		// enables dialogue switching
+		canSwitchDialogue = true;
+		switchToEnemyAttack = true;
 	}
 }

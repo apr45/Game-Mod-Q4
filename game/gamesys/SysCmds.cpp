@@ -3067,11 +3067,9 @@ void Cmd_nextDialogue_f(const idCmdArgs& args) {
 			// enemy no longer poisoned
 			player->isEnemyPoisoned = false;
 			player->EnemyTurn();
-		}
-		else if (player->isEnemyPoisoned) {
-			// enemy no longer poisoned
-			player->isEnemyPoisoned = false;
-			player->EnemyTurn();
+		} else {
+			player->isEnemyKilled = true;
+			player->EnemyKilled();
 		}
 	}
 }
