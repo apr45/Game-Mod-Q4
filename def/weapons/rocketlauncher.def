@@ -391,7 +391,7 @@ entityDef projectile_rocket_homing
 
 entityDef damage_rocketDirect 
 {
-	"damage"					"0" // Original: 150
+	"damage"					"25"
 	"push"						"45000"
 	"gib"						"1"
 

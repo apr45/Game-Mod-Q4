@@ -434,6 +434,8 @@ public:
 	bool					isTurnBasedMode;		// checks whether gameplay is set on turn-based mode
 	int						turnBasedRound;			// tracks the number of cycles of play during turn-based mode
 
+	const idDict			*damageDef;
+
 	// turn-based turns 
 		bool					playerTurn;
 		bool					enemyTurn;
@@ -475,6 +477,7 @@ public:
 		int						creditsEarn;
 		int						expEarn;
 		int						expLevelTotal;
+		int						expLevelMax;
 
 	bool					canSwitchDialogue;		// checks if player can move to next dialogue
 	bool					switchToEnemyAttack;	// flag to enable enemy attack

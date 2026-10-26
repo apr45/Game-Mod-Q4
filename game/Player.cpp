@@ -1569,29 +1569,33 @@ void idPlayer::Init( void ) {
 	turnBasedRound = 0; // resets cycle tracker
 
 	// sets up initial state of turn-based actions
-	allowPlayerInput = false;
-	canSwitchDialogue = false;
-	blockAttack = false;
-	switchToEnemyAttack = false;
-	expLevelTotal = 10;
+		allowPlayerInput = false;
+		canSwitchDialogue = false;
+		blockAttack = false;
+		switchToEnemyAttack = false;
+		expLevelTotal = 10;
 
 	// sets up values for enemy stats
-	enemyAttackDamage = 5;
-	enemyMissChance = 10;
-	enemyCritChance = 10;
-	isEnemyPoisoned = false;
-	isEnemyKilled = false;
+		enemyAttackDamage = 5;
+		enemyMissChance = 10;
+		enemyCritChance = 10;
+		isEnemyPoisoned = false;
+		isEnemyKilled = false;
 
 	// sets up values for player stats
-	playerAttackDamage = 5;
-	playerCritChance = 10;
-	playerHealAmount = 10;
-	playerAcidDamage = 5;
-	playerExpAmount = 0;
-	playerCreditsAmount = 0;
-	playerExpLevel = 0;
-	isPlayerShieldOn = false;
-	earnDoubleExp = false;
+		playerCritChance = 10;
+		playerHealAmount = 10;
+		playerAcidDamage = 5;
+		playerExpAmount = 0;
+		playerCreditsAmount = 0;
+		playerExpLevel = 0;
+		isPlayerShieldOn = false;
+		earnDoubleExp = false;
+		expLevelMax = 5;
+
+	// set up player attack damage
+		damageDef = gameLocal.FindEntityDefDict("damage_blaster", false);
+		playerAttackDamage = damageDef->GetInt("damage");
 	// ---------------------------------------------- custom properties ----------------------------------------------
 
 
@@ -6160,7 +6164,7 @@ void idPlayer::Weapon_Combat( void ) {
 	pfl.weaponFired = false;
  	if ( !influenceActive ) {
  		if ( ( usercmd.buttons & BUTTON_ATTACK ) && !weaponGone ) {
- 			FireWeapon();
+ 			//FireWeapon();
  		} else if ( oldButtons & BUTTON_ATTACK ) {
  			pfl.attackHeld = false;
  			weapon->EndAttack();
@@ -9234,10 +9238,16 @@ void idPlayer::UpdateHud( void ) {
 
 	// progression update
 		// player
-			idStr lv = "LV: ";
 			hud->SetStateInt("currency_amount_text", playerCreditsAmount);
-			hud->SetStateString("level_text", lv + playerExpLevel);
-			hud->SetStateInt("exp_amount_text", playerExpAmount);
+
+			idStr lv = "LV: ";
+			if (playerExpLevel == expLevelMax) {
+				hud->SetStateString("level_text", "MAX LV");
+				hud->SetStateString("exp_amount_text", "");
+			} else {
+				hud->SetStateString("level_text", lv + playerExpLevel);
+				hud->SetStateInt("exp_amount_text", playerExpAmount);
+			}
 		// enemy 
 			hud->SetStateInt("enemy_health", enemyHealth);
 }
@@ -14245,8 +14255,8 @@ void idPlayer::PlayerTurn() {
 				hud->SetStateString("dialogue_text1", "You block next attack.");
 				blockAttack = true;
 
-				creditsEarn = 2;
-				expEarn = 5;
+				creditsEarn = 5;
+				expEarn = 0;
 			}
 			else if (playerChoice == 3) {
 				PlayerAttack();
@@ -14474,7 +14484,7 @@ void idPlayer::PlayerProgression() {
 	playerExpAmount += expEarn;
 
 	// checks if experience points exceeds current level limit
-	if (playerExpAmount >= expLevelTotal) {
+	if (playerExpAmount >= expLevelTotal && playerExpLevel != expLevelMax) {
 		// level up by one
 		playerExpLevel++;
 
@@ -14483,6 +14493,26 @@ void idPlayer::PlayerProgression() {
 
 		// new level limit
 		expLevelTotal += 25;
+
+		// upgrades weapon and attack damage every level up
+		if (playerExpLevel == 1) {
+			idealWeapon = SlotForWeapon("weapon_shotgun");
+			damageDef = gameLocal.FindEntityDefDict("damage_pellet", false);
+		} else if (playerExpLevel == 2) {
+			idealWeapon = SlotForWeapon("weapon_machinegun");
+			damageDef = gameLocal.FindEntityDefDict("damage_machinegun", false);
+		} else if (playerExpLevel == 3) {
+			idealWeapon = SlotForWeapon("weapon_hyperblaster");
+			damageDef = gameLocal.FindEntityDefDict("damage_hyperblaster", false);
+		} else if (playerExpLevel == 4) {
+			idealWeapon = SlotForWeapon("weapon_rocketlauncher");
+			damageDef = gameLocal.FindEntityDefDict("damage_rocketDirect", false);
+		} else if (playerExpLevel == 5) {
+			idealWeapon = SlotForWeapon("weapon_nailgun");
+			damageDef = gameLocal.FindEntityDefDict("damage_nailDirect", false);
+		}
+		playerAttackDamage = damageDef->GetInt("damage");
+		SetWeapon(idealWeapon);
 
 		idStr temp = "";
 		hud->SetStateString("dialogue_text2", temp + "You earned " + creditsEarn + " credits and " + expEarn + " experience. You leveled up.");
