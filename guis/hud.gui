@@ -435,9 +435,13 @@ windowDef Desktop
 		set "helpScreen::visible" "0";
 	}
 
-	onNamedEvent turnBased_modeOn {
-		set "turnBased_system::visible" "1";
-		set "playerChoices::visible" "0";
+	onNamedEvent turnBased_mode {
+		if ("turnBased_system::visible" == 0){
+			set "turnBased_system::visible" "1";
+			set "playerChoices::visible" "0";
+		} else {
+			set "turnBased_system::visible" "0";
+		}
 	}
 
 	onNamedEvent playerChoices {
@@ -459,32 +463,14 @@ windowDef Desktop
 	onNamedEvent shopMenu {
 		if ("shopMenu_equip::visible" == 0) {
 			set "shopMenu_equip::visible" "1";
+			set "gui::shopMenu_equip" "1";
+			set	"equip::visible" "1";
+			set	"equip::text" "";
 		} else {
 			set "shopMenu_equip::visible" "0";
-		}
-	}
-
-	onNamedEvent enemyStats {
-		if ("enemyHealth::visible" == 0) {
-			set "enemyHealth::visible" "1";
-		} else {
-			set "enemyHealth::visible" "0";
-		}
-	}
-
-	onNamedEvent actChoices {
-		if ("actChoices::visible" == 0) {
-			set "actChoices::visible" "1";
-		} else {
-			set "actChoices::visible" "0";
-		}
-	}
-
-	onNamedEvent shopMenu {
-		if ("shopMenu_equip::visible" == 0) {
-			set "shopMenu_equip::visible" "1";
-		} else {
-			set "shopMenu_equip::visible" "0";
+			set "gui::shopMenu_equip" "0";
+			set	"equip::visible" "0";
+			set	"equip::text" "";
 		}
 	}
 
@@ -1717,13 +1703,13 @@ windowDef Desktop
 			visible	1
 			forecolor	1,1,1,1
 			text	"gui::weaponname"
-			textscale	0.2
+			textscale	0.15
 			font	"fonts/marine"
 			textspacing	0
 		}
 		windowDef weaponInfo_icon
 		{
-			rect	35,0,115,30
+			rect	50,5,100,20
 			visible	1
 			background	"gui::weapicon"
 			matcolor	1,1,1,0.596
@@ -2449,8 +2435,6 @@ windowDef Desktop
 		}
 
 	}
-=======
->>>>>>> Stashed changes
 	windowDef turnBased_system
 	{
 		rect	0,0,640,480
@@ -2518,7 +2502,7 @@ windowDef Desktop
 				}
 				windowDef actChoice_text
 				{
-					rect	20,9,40,20
+					rect	15,9,40,20
 					visible	1
 					forecolor	1,1,1,1
 					text	"ACT"
@@ -2548,7 +2532,7 @@ windowDef Desktop
 				}
 				windowDef blockChoice_text
 				{
-					rect	20,9,70,20
+					rect	15,9,70,20
 					visible	1
 					forecolor	1,1,1,1
 					text	"BLOCK"
@@ -2578,7 +2562,7 @@ windowDef Desktop
 				}
 				windowDef attackChoice_text
 				{
-					rect	20,9,80,20
+					rect	15,9,80,20
 					visible	1
 					forecolor	1,1,1,1
 					text	"ATTACK"
@@ -2615,10 +2599,10 @@ windowDef Desktop
 				}
 				windowDef actChoice1_text
 				{
-					rect	20,9,40,20
+					rect	15,9,70,20
 					visible	1
 					forecolor	1,1,1,1
-					text	"HEAL"
+					text	"MEDIKIT"
 					textscale	0.25
 					font	"fonts/marine"
 				}
@@ -2645,10 +2629,10 @@ windowDef Desktop
 				}
 				windowDef actChoice2_text
 				{
-					rect	20,9,70,20
+					rect	15,9,70,20
 					visible	1
 					forecolor	1,1,1,1
-					text	"ACID"
+					text	"POISON"
 					textscale	0.25
 					font	"fonts/marine"
 				}
@@ -2675,7 +2659,7 @@ windowDef Desktop
 				}
 				windowDef actChoice3_text
 				{
-					rect	20,9,80,20
+					rect	15,9,80,20
 					visible	1
 					forecolor	1,1,1,1
 					text	"2x CR"
@@ -2692,7 +2676,6 @@ windowDef Desktop
 			}
 		}
 	}
->>>>>>> Stashed changes
 	windowDef helpScreen
 	{
 		rect	0,0,640,480
@@ -2700,14 +2683,12 @@ windowDef Desktop
 		windowDef helpScreen_bg
 		{
 			rect	170,65,300,350
-			rect	170,65,300,350
 			visible	1
 			background	"gfx/guis/mainmenu/popup_bg"
 			matcolor	1,1,1,1
 		}
 		windowDef helpScreen_title
 		{
-			rect	177,120,275,25
 			rect	177,120,275,25
 			visible	1
 			forecolor	1,1,1,0.8
@@ -2718,11 +2699,19 @@ windowDef Desktop
 		windowDef helpScreen_exit
 		{
 			rect	177,325,275,25
-			rect	177,325,275,25
 			visible	1
 			forecolor	1,1,1,0.8
 			text	"Press 'H' to Exit"
 			textscale	0.28
+			font	"fonts/marine"
+		}
+		windowDef helpScreen_text
+		{
+			rect	177,140,285,200
+			visible	1
+			forecolor	1,1,1,1
+			text	"Battle against monsters in a turn-based approach. During a monster's turn, it will attack you with a chance to miss or land a critical hit. On your turn, you can choose between three actions: Act, Block, or Attack. If you pick to act upon yourself, you can pick one temporary perk: Medikit, Poison, or Double Credits. Credits are used to purchase special equipment with permanent perks from the shop. Receiving experience allows you to level up and gain new weapons with higher attack damage."
+			textscale	0.2
 			font	"fonts/marine"
 		}
 	}
@@ -2795,8 +2784,8 @@ windowDef Desktop
 					{
 						rect	8,13,115,20
 						visible	1
-						forecolor	1,1,1,0.588
-						text	"5% Shield"
+						forecolor	1,1,1,0.580
+						text	"Armor"
 						textscale	0.25
 						font	"fonts/marine"
 						textalign	2
@@ -2805,8 +2794,8 @@ windowDef Desktop
 					{
 						rect	8,0,115,20
 						visible	1
-						forecolor	0.823,0.905,0.572,0.4
-						text	"G          CR: 4"
+						forecolor	0.807,0.890,0.556,0.4
+						text	"4         CR: 25"
 						textscale	0.25
 						font	"fonts/marine"
 					}
@@ -2826,8 +2815,8 @@ windowDef Desktop
 					{
 						rect	8,12,115,20
 						visible	1
-						forecolor	1,1,1,0.584
-						text	"5% Health"
+						forecolor	1,1,1,0.568
+						text	"Medikit+"
 						textscale	0.25
 						font	"fonts/marine"
 						textalign	2
@@ -2836,8 +2825,8 @@ windowDef Desktop
 					{
 						rect	8,0,115,20
 						visible	1
-						forecolor	0.823,0.905,0.572,0.4
-						text	"G          CR: 4"
+						forecolor	0.811,0.894,0.560,0.4
+						text	"5         CR: 35"
 						textscale	0.25
 						font	"fonts/marine"
 					}
@@ -2857,8 +2846,8 @@ windowDef Desktop
 					{
 						rect	8,12,115,20
 						visible	1
-						forecolor	1,1,1,0.588
-						text	"5% Defense"
+						forecolor	1,1,1,0.572
+						text	"Lucky Dice"
 						textscale	0.25
 						font	"fonts/marine"
 						textalign	2
@@ -2867,8 +2856,8 @@ windowDef Desktop
 					{
 						rect	8,0,115,20
 						visible	1
-						forecolor	0.823,0.905,0.572,0.4
-						text	"G          CR: 4"
+						forecolor	0.803,0.886,0.552,0.4
+						text	"6         CR: 45"
 						textscale	0.25
 						font	"fonts/marine"
 					}
@@ -2888,8 +2877,8 @@ windowDef Desktop
 					{
 						rect	8,13,115,20
 						visible	1
-						forecolor	1,1,1,0.592
-						text	"5% Defense"
+						forecolor	1,1,1,0.584
+						text	"Exp Ring"
 						textscale	0.25
 						font	"fonts/marine"
 						textalign	2
@@ -2898,8 +2887,8 @@ windowDef Desktop
 					{
 						rect	8,0,115,20
 						visible	1
-						forecolor	0.823,0.905,0.572,0.4
-						text	"G          CR: 4"
+						forecolor	0.815,0.898,0.564,0.4
+						text	"7         CR: 50"
 						textscale	0.25
 						font	"fonts/marine"
 					}
@@ -2919,8 +2908,8 @@ windowDef Desktop
 					{
 						rect	8,13,115,20
 						visible	1
-						forecolor	1,1,1,0.592
-						text	"5% Defense"
+						forecolor	1,1,1,0.580
+						text	"Acid+"
 						textscale	0.25
 						font	"fonts/marine"
 						textalign	2
@@ -2929,13 +2918,40 @@ windowDef Desktop
 					{
 						rect	8,0,115,20
 						visible	1
-						forecolor	0.823,0.905,0.572,0.4
-						text	"G          CR: 4"
+						forecolor	0.815,0.898,0.564,0.4
+						text	"8         CR: 20"
 						textscale	0.25
 						font	"fonts/marine"
 					}
 				}
 			}
+		}
+	}
+	windowDef equip
+	{
+		rect	390,305,250,70
+		visible	0
+		windowDef equip_info
+		{
+			rect	0,0,250,45
+			visible	1
+			forecolor	1,1,1,1
+			text	"gui::equip_info"
+			textscale	0.25
+			font	"fonts/marine"
+			backcolor	0,0,0,0.494
+			textalign	1
+		}
+		windowDef equip_confirm
+		{
+			rect	50,52,200,18
+			visible	1
+			backcolor	0,0,0,0.494
+			forecolor	1,1,1,1
+			text	"Press '9' to Confirm  "
+			textscale	0.2
+			font	"fonts/marine"
+			textalign	2
 		}
 	}
 }

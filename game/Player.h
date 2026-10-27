@@ -460,7 +460,7 @@ public:
 		int						playerCreditsAmount;
 		int						playerExpAmount;
 		int						playerExpLevel;
-		bool					isPlayerShieldOn;
+		bool					isPlayerArmorOn;
 		bool					earnDoubleExp;
 
 	// player input

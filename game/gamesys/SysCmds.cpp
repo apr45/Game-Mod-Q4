@@ -2979,7 +2979,7 @@ void Cmd_choice1_f(const idCmdArgs& args) {
 		} else {
 			gameLocal.Printf("Player Chose to Heal\n");
 
-			// process player's choice to heal
+			// process player's choice to medikit
 			player->PlayerAction();
 
 			// ends player's turn
@@ -3011,7 +3011,7 @@ void Cmd_choice2_f(const idCmdArgs& args) {
 		} else {
 			gameLocal.Printf("Player Chose to Throw Acid\n");
 
-			// process player's choice to acid
+			// process player's choice to poison
 			player->PlayerAction();
 		}
 	}
@@ -3094,29 +3094,31 @@ void Cmd_toggleShopMenu_f(const idCmdArgs& args) {
 	}
 }
 
-// view shield info and select shield equipment
-void Cmd_shield_f(const idCmdArgs& args) {
+// view armor info
+void Cmd_armor_f(const idCmdArgs& args) {
 	// pointer to player
 	idPlayer* player = gameLocal.GetLocalPlayer();
 
 	// checks if shop is visible
 	if (player->isShopMenuVisible) {
 		player->playerPurchaseChoice = 4;
+		player->hud->SetStateString("equip_info", "Take 20% less damage from monsters.");
 	}
 }
 
-// view healing amulet info and select healing amulet equipment
-void Cmd_healingAmulet_f(const idCmdArgs& args) {
+// view medikit+ info
+void Cmd_medikitPlus_f(const idCmdArgs& args) {
 	// pointer to player
 	idPlayer* player = gameLocal.GetLocalPlayer();
 
 	// checks if shop is visible
 	if (player->isShopMenuVisible) {
 		player->playerPurchaseChoice = 5;
+		player->hud->SetStateString("equip_info", "Increase healing by 10%.");
 	}
 }
 
-// view lucky dice info and select lucky dice equipment
+// view lucky dice info
 void Cmd_luckyDice_f(const idCmdArgs& args) {
 	// pointer to player
 	idPlayer* player = gameLocal.GetLocalPlayer();
@@ -3124,10 +3126,11 @@ void Cmd_luckyDice_f(const idCmdArgs& args) {
 	// checks if shop is visible
 	if (player->isShopMenuVisible) {
 		player->playerPurchaseChoice = 6;
+		player->hud->SetStateString("equip_info", "Increase chance of critical hits by 10%.");
 	}
 }
 
-// view experience ring info and select experience ring equipment
+// view experience ring info
 void Cmd_experienceRing_f(const idCmdArgs& args) {
 	// pointer to player
 	idPlayer* player = gameLocal.GetLocalPlayer();
@@ -3135,17 +3138,19 @@ void Cmd_experienceRing_f(const idCmdArgs& args) {
 	// checks if shop is visible
 	if (player->isShopMenuVisible) {
 		player->playerPurchaseChoice = 7;
+		player->hud->SetStateString("equip_info", "Receive double experience from actions.");
 	}
 }
 
-// view venom potion info and select venon potion equipment
-void Cmd_venomPotion_f(const idCmdArgs& args) {
+// view acid+ info
+void Cmd_acidPlus_f(const idCmdArgs& args) {
 	// pointer to player
 	idPlayer* player = gameLocal.GetLocalPlayer();
 
 	// checks if shop is visible
 	if (player->isShopMenuVisible) {
 		player->playerPurchaseChoice = 8;
+		player->hud->SetStateString("equip_info", "Increase poison damage by 5%.");
 	}
 }
 
@@ -3157,57 +3162,54 @@ void Cmd_confirm_f(const idCmdArgs& args) {
 	// checks if shop is visible
 	if (player->isShopMenuVisible) {
 
-		// checks if player can purchase shield equipment
-		if (player->playerPurchaseChoice == 4 && player->playerCreditsAmount >= 5) {
-			// player takes less enemy attack damage
-			gameLocal.Printf("Shield Brought\n");
-			player->isPlayerShieldOn = true;
-			player->playerCreditsAmount -= 5;
+		// checks if player can purchase any equipment
+		if (player->playerPurchaseChoice == 4 && player->playerCreditsAmount >= 25) {
+			if (!player->isPlayerArmorOn) {
+				// player takes less enemy attack damage
+				player->isPlayerArmorOn = true;
+				player->playerCreditsAmount -= 25;
+				player->hud->SetStateString("equip_info", "Armor Purchased");
+			} else {
+				player->hud->SetStateString("equip_info", "You already brought Armor.");
+			}
+		} else if (player->playerPurchaseChoice == 5 && player->playerCreditsAmount >= 35) {
+			if (player->playerHealAmount != 20) {
+				// increase healing
+				player->playerHealAmount += 10;
+				player->playerCreditsAmount -= 35;
+				player->hud->SetStateString("equip_info", "Medikit+ Purchased");
+			} else {
+				player->hud->SetStateString("equip_info", "You already brought Medikit+.");
+			}
+		} else if (player->playerPurchaseChoice == 6 && player->playerCreditsAmount >= 45) {
+			if (player->playerCritChance != 25) {
+				// increase player critical chance percentage
+				player->playerCritChance += 15;
+				player->playerCreditsAmount -= 45;
+				player->hud->SetStateString("equip_info", "Lucky Dice Purchased");
+			} else {
+				player->hud->SetStateString("equip_info", "You already brought Lucky Dice.");
+			}
+		} else if (player->playerPurchaseChoice == 7 && player->playerCreditsAmount >= 50) {
+			if (!player->earnDoubleExp) {
+				// increase experience earned
+				player->earnDoubleExp = true;
+				player->playerCreditsAmount -= 50;
+				player->hud->SetStateString("equip_info", "Exp Ring Brought");
+			} else {
+				player->hud->SetStateString("equip_info", "You already brought Exp Ring");
+			}
+		} else if (player->playerPurchaseChoice == 8 && player->playerCreditsAmount >= 20) {
+			if (player->playerAcidDamage != 10) {
+				// increase poison damage
+				player->playerAcidDamage += 5;
+				player->playerCreditsAmount -= 20;
+				player->hud->SetStateString("equip_info", "Acid+ Purchased");
+			} else {
+				player->hud->SetStateString("equip_info", "You already brought Acid+");
+			}
 		} else {
-			gameLocal.Printf("Can't purchase shield\n");
-		}
-
-		// checks if player can purchase healing amulet equipment
-		if (player->playerPurchaseChoice == 5 && player->playerCreditsAmount >= 5) {
-			// increase healing
-			gameLocal.Printf("Healing Amulet Brought\n");
-			player->playerHealAmount += 10;
-			player->playerCreditsAmount -= 5;
-		}
-		else {
-			gameLocal.Printf("Can't purchase healing amulet\n");
-		}
-
-		// checks if player can purchase lucky dice equipment
-		if (player->playerPurchaseChoice == 6 && player->playerCreditsAmount >= 5) {
-			// increase player critical chance percentage
-			gameLocal.Printf("Lucky Dice Brought\n");
-			player->playerCritChance += 10;
-			player->playerCreditsAmount -= 5;
-		} else {
-			gameLocal.Printf("Can't purchase lucky dice\n");
-		}
-
-		// checks if player can purchase experience ring equipment
-		if (player->playerPurchaseChoice == 7 && player->playerCreditsAmount >= 5) {
-			// increase experience earned
-			gameLocal.Printf("Experience Ring Brought\n");
-			player->earnDoubleExp = true;
-			player->playerCreditsAmount -= 5;
-		}
-		else {
-			gameLocal.Printf("Can't purchase experience ring\n");
-		}
-
-		// checks if player can purchase venom potion equipment
-		if (player->playerPurchaseChoice == 8 && player->playerCreditsAmount >= 5) {
-			// increase acid damage
-			gameLocal.Printf("Venom Potion Brought\n");
-			player->playerAcidDamage += 5;
-			player->playerCreditsAmount -= 5;
-		}
-		else {
-			gameLocal.Printf("Can't purchase venom potion\n");
+			player->hud->SetStateString("equip_info", "Not enough credits!");
 		}
 	}
 }
@@ -3518,11 +3520,11 @@ void idGameLocal::InitConsoleCommands( void ) {
 
 	cmdSystem->AddCommand("shopMenu", Cmd_toggleShopMenu_f, CMD_FL_GAME, "Toggle shop menu");
 
-	cmdSystem->AddCommand("shield", Cmd_shield_f, CMD_FL_GAME, "Showcase information on shield equipment");
-	cmdSystem->AddCommand("healingAmulet", Cmd_healingAmulet_f, CMD_FL_GAME, "Showcase information on healing amulet");
+	cmdSystem->AddCommand("armor", Cmd_armor_f, CMD_FL_GAME, "Showcase information on armor equipment");
+	cmdSystem->AddCommand("medikitPlus", Cmd_medikitPlus_f, CMD_FL_GAME, "Showcase information on medikit+");
 	cmdSystem->AddCommand("luckyDice", Cmd_luckyDice_f, CMD_FL_GAME, "Showcase information on lucky dice equipment");
 	cmdSystem->AddCommand("experienceRing", Cmd_experienceRing_f, CMD_FL_GAME, "Showcase information on experience ring equipment");
-	cmdSystem->AddCommand("venomPotion", Cmd_venomPotion_f, CMD_FL_GAME, "Showcase information on venom potion equipment");
+	cmdSystem->AddCommand("acidPlus", Cmd_acidPlus_f, CMD_FL_GAME, "Showcase information on venom equipment");
 	cmdSystem->AddCommand("confirm", Cmd_confirm_f, CMD_FL_GAME, "Confirms player's purchase of specific equipment");
 }
 

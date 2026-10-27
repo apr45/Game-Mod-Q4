@@ -1589,7 +1589,7 @@ void idPlayer::Init( void ) {
 		playerExpAmount = 0;
 		playerCreditsAmount = 0;
 		playerExpLevel = 0;
-		isPlayerShieldOn = false;
+		isPlayerArmorOn = false;
 		earnDoubleExp = false;
 		expLevelMax = 5;
 
@@ -14255,8 +14255,8 @@ void idPlayer::PlayerTurn() {
 				hud->SetStateString("dialogue_text1", "You block next attack.");
 				blockAttack = true;
 
-				creditsEarn = 5;
-				expEarn = 0;
+				creditsEarn = 15;
+				expEarn = 15;
 			}
 			else if (playerChoice == 3) {
 				PlayerAttack();
@@ -14330,7 +14330,7 @@ void idPlayer::EnemyAttack() {
 	// checks if enemy lands a regular attack
 	if (randNum <= hitChance) {
 		// checks if player has sheild equipment
-		if (isPlayerShieldOn) {
+		if (isPlayerArmorOn) {
 			// calculates new enemy attack damage based on defense percentage
 			int damageDecrease = enemyAttackDamage * 0.2;
 			int newEnemyAttackDamage = enemyAttackDamage - damageDecrease;
@@ -14354,7 +14354,7 @@ void idPlayer::EnemyAttack() {
 			int doubleDamage = enemyAttackDamage * 2;
 
 			// checks if player has sheild equipment
-			if (isPlayerShieldOn) {
+			if (isPlayerArmorOn) {
 				// calculates new enemy attack damage based on defense percentage
 				int damageDecrease = doubleDamage * 0.2;
 				int newEnemyAttackDamage = doubleDamage - damageDecrease;
@@ -14424,7 +14424,7 @@ void idPlayer::PlayerAction() {
 		}
 
 		idStr temp = "";
-		hud->SetStateString("dialogue_text1", temp + "You healed for one turn. You gained " + playerHealAmount + " points back in health.");
+		hud->SetStateString("dialogue_text1", temp + "You took a medikit. You gained " + playerHealAmount + " points back in health.");
 		
 		creditsEarn = 2;
 		expEarn = 5;
