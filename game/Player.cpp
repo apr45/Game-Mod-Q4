@@ -9738,7 +9738,7 @@ void idPlayer::Think( void ) {
 				
 				// stores enemy stats that player is fighting against
 				enemy = ent;
-				enemyAttackDamage = 5;
+				enemyAttackDamage = 50;
 				enemyType = enemyType.EnemyNameCleanUp(ent->name);
 				hud->SetStateString("enemy_name", enemyType);
 				enemyHealth = ent->health;
@@ -14423,6 +14423,11 @@ void idPlayer::EnemyAttack() {
 				hud->SetStateString("dialogue_text1", enemyType + "attacks and lands a critical hit. You take " + doubleDamage + " points in damage.");
 			}
 		}
+	}
+
+	// if player health reaches 0, closes game
+	if (health <= 0) {
+		cmdSystem->BufferCommandText(CMD_EXEC_NOW, "quit");
 	}
 }
 

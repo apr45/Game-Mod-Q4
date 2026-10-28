@@ -304,9 +304,6 @@ public:
 	int						lastHitTime;			// last time projectile fired by player hit target
 	int						lastSavingThrowTime;	// for the "free miss" effect
 
-	// custom properties
-	bool freezePlayerMovement; // stops player from moving
-
 	struct playerFlags_s {
 		bool		forward			:1;
 		bool		backward		:1;
@@ -430,6 +427,8 @@ public:
 
 	// ---------------------------------------------- custom properties ----------------------------------------------
 	bool					initialHealthSet;		// flag for standard baseline health setup
+
+	bool					freezePlayerMovement;	// stops player from moving
 
 	const idDict			*damageDef;				// gets weapon damage in def file
 
