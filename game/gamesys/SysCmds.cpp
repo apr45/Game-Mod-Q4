@@ -2980,7 +2980,7 @@ void Cmd_choice1_f(const idCmdArgs& args) {
 			gameLocal.Printf("Player Chose to Heal\n");
 
 			// process player's choice to medikit
-			player->PlayerAction();
+			player->PlayerAct();
 
 			// ends player's turn
 			player->playerTurn = false;
@@ -3012,7 +3012,7 @@ void Cmd_choice2_f(const idCmdArgs& args) {
 			gameLocal.Printf("Player Chose to Throw Acid\n");
 
 			// process player's choice to poison
-			player->PlayerAction();
+			player->PlayerAct();
 		}
 	}
 }
@@ -3040,8 +3040,42 @@ void Cmd_choice3_f(const idCmdArgs& args) {
 			gameLocal.Printf("Player Chose to Double Credits\n");
 
 			// process player's choice for double credits
-			player->PlayerAction();
+			player->PlayerAct();
 		}
+	}
+}
+
+// enemy flee interaction
+void Cmd_choice4_f(const idCmdArgs& args) {
+	// pointer to player
+	idPlayer* player = gameLocal.GetLocalPlayer();
+
+	// checks if player input is permitted
+	if (player->allowPlayerInput && player->isPlayerActing) {
+		player->playerChoice = 4;
+		gameLocal.Printf("Player Chose to Flee\n");
+
+		// ends player's turn
+		player->playerTurn = false;
+		player->allowPlayerInput = false;
+		player->PlayerAct();
+	}
+}
+
+// gamble interaction
+void Cmd_choice5_f(const idCmdArgs& args) {
+	// pointer to player
+	idPlayer* player = gameLocal.GetLocalPlayer();
+
+	// checks if player input is permitted
+	if (player->allowPlayerInput && player->isPlayerActing) {
+		player->playerChoice = 5;
+		gameLocal.Printf("Player Chose to Gamble\n");
+
+		// ends player's turn
+		player->playerTurn = false;
+		player->allowPlayerInput = false;
+		player->PlayerAct();
 	}
 }
 
@@ -3064,23 +3098,26 @@ void Cmd_nextDialogue_f(const idCmdArgs& args) {
 
 			player->EnemyTurn();
 		} else if (player->isEnemyPoisoned){
-			// enemy no longer poisoned
+			// handes enemy poisoning
+			player->enemyPoisonedCounter--;
 			player->isEnemyPoisoned = false;
+
 			player->EnemyTurn();
 		} else {
 			player->isEnemyKilled = true;
-			player->EnemyKilled();
+			player->KilledOrFleeEnemy();
 		}
 	}
 }
 
 // enables or disable shop menu
+/*
 void Cmd_toggleShopMenu_f(const idCmdArgs& args) {
 	// pointer to player
 	idPlayer* player = gameLocal.GetLocalPlayer();
 
 	// checks if player pointer isn't null
-	if (player && player->hud) {
+	if (player && player->hud && player->canOpenShop) {
 		player->hud->HandleNamedEvent("shopMenu");
 
 		// checks if shop is opened or not
@@ -3090,6 +3127,21 @@ void Cmd_toggleShopMenu_f(const idCmdArgs& args) {
 			player->isShopMenuVisible = false;
 		}
 	} else {
+		gameLocal.Printf("Can not open shop during this time!\n");
+	}
+}
+*/
+
+// enables or disable perk stats
+void Cmd_togglePerkStats_f(const idCmdArgs& args) {
+	// pointer to player
+	idPlayer* player = gameLocal.GetLocalPlayer();
+
+	// checks if player pointer isn't null
+	if (player && player->hud) {
+		player->hud->HandleNamedEvent("perksStats");
+	}
+	else {
 		gameLocal.Printf("Player not found\n");
 	}
 }
@@ -3101,8 +3153,10 @@ void Cmd_armor_f(const idCmdArgs& args) {
 
 	// checks if shop is visible
 	if (player->isShopMenuVisible) {
-		player->playerPurchaseChoice = 4;
+		player->playerPurchaseChoice = 6;
 		player->hud->SetStateString("equip_info", "Take 20% less damage from monsters.");
+	} else {
+		gameLocal.Printf("Can not open shop during this time!\n");
 	}
 }
 
@@ -3113,7 +3167,7 @@ void Cmd_medikitPlus_f(const idCmdArgs& args) {
 
 	// checks if shop is visible
 	if (player->isShopMenuVisible) {
-		player->playerPurchaseChoice = 5;
+		player->playerPurchaseChoice = 7;
 		player->hud->SetStateString("equip_info", "Increase healing by 10%.");
 	}
 }
@@ -3125,7 +3179,7 @@ void Cmd_luckyDice_f(const idCmdArgs& args) {
 
 	// checks if shop is visible
 	if (player->isShopMenuVisible) {
-		player->playerPurchaseChoice = 6;
+		player->playerPurchaseChoice = 8;
 		player->hud->SetStateString("equip_info", "Increase chance of critical hits by 10%.");
 	}
 }
@@ -3137,7 +3191,7 @@ void Cmd_experienceRing_f(const idCmdArgs& args) {
 
 	// checks if shop is visible
 	if (player->isShopMenuVisible) {
-		player->playerPurchaseChoice = 7;
+		player->playerPurchaseChoice = 9;
 		player->hud->SetStateString("equip_info", "Receive double experience from actions.");
 	}
 }
@@ -3149,7 +3203,7 @@ void Cmd_acidPlus_f(const idCmdArgs& args) {
 
 	// checks if shop is visible
 	if (player->isShopMenuVisible) {
-		player->playerPurchaseChoice = 8;
+		player->playerPurchaseChoice = 0;
 		player->hud->SetStateString("equip_info", "Increase poison damage by 5%.");
 	}
 }
@@ -3163,48 +3217,54 @@ void Cmd_confirm_f(const idCmdArgs& args) {
 	if (player->isShopMenuVisible) {
 
 		// checks if player can purchase any equipment
-		if (player->playerPurchaseChoice == 4 && player->playerCreditsAmount >= 25) {
+		if (player->playerPurchaseChoice == 6 && player->playerCreditsAmount >= 25) {
 			if (!player->isPlayerArmorOn) {
 				// player takes less enemy attack damage
 				player->isPlayerArmorOn = true;
 				player->playerCreditsAmount -= 25;
 				player->hud->SetStateString("equip_info", "Armor Purchased");
+				player->hud->SetStateString("perksStats_perk1_status", "On |20%");
+
 			} else {
 				player->hud->SetStateString("equip_info", "You already brought Armor.");
 			}
-		} else if (player->playerPurchaseChoice == 5 && player->playerCreditsAmount >= 35) {
+		} else if (player->playerPurchaseChoice == 7 && player->playerCreditsAmount >= 35) {
 			if (player->playerHealAmount != 20) {
 				// increase healing
 				player->playerHealAmount += 10;
 				player->playerCreditsAmount -= 35;
 				player->hud->SetStateString("equip_info", "Medikit+ Purchased");
+				player->hud->SetStateString("perksStats_perk2_status", "Off|20%");
 			} else {
 				player->hud->SetStateString("equip_info", "You already brought Medikit+.");
 			}
-		} else if (player->playerPurchaseChoice == 6 && player->playerCreditsAmount >= 45) {
+		} else if (player->playerPurchaseChoice == 8 && player->playerCreditsAmount >= 45) {
 			if (player->playerCritChance != 25) {
 				// increase player critical chance percentage
 				player->playerCritChance += 15;
 				player->playerCreditsAmount -= 45;
 				player->hud->SetStateString("equip_info", "Lucky Dice Purchased");
+				player->hud->SetStateString("perksStats_perk3_status", "On |25%");
 			} else {
 				player->hud->SetStateString("equip_info", "You already brought Lucky Dice.");
 			}
-		} else if (player->playerPurchaseChoice == 7 && player->playerCreditsAmount >= 50) {
+		} else if (player->playerPurchaseChoice == 9 && player->playerCreditsAmount >= 50) {
 			if (!player->earnDoubleExp) {
 				// increase experience earned
 				player->earnDoubleExp = true;
 				player->playerCreditsAmount -= 50;
 				player->hud->SetStateString("equip_info", "Exp Ring Brought");
+				player->hud->SetStateString("perksStats_perk4_status", "On | 2x");
 			} else {
 				player->hud->SetStateString("equip_info", "You already brought Exp Ring");
 			}
-		} else if (player->playerPurchaseChoice == 8 && player->playerCreditsAmount >= 20) {
+		} else if (player->playerPurchaseChoice == 0 && player->playerCreditsAmount >= 20) {
 			if (player->playerAcidDamage != 10) {
 				// increase poison damage
 				player->playerAcidDamage += 5;
 				player->playerCreditsAmount -= 20;
 				player->hud->SetStateString("equip_info", "Acid+ Purchased");
+				player->hud->SetStateString("perksStats_perk6_status", "Off|10%");
 			} else {
 				player->hud->SetStateString("equip_info", "You already brought Acid+");
 			}
@@ -3212,6 +3272,17 @@ void Cmd_confirm_f(const idCmdArgs& args) {
 			player->hud->SetStateString("equip_info", "Not enough credits!");
 		}
 	}
+}
+
+// enchance player stats
+void Cmd_enhanceStats_f(const idCmdArgs& args) {
+	idPlayer* player = gameLocal.GetLocalPlayer();
+	player->health = 100;
+	player->playerCritChance = 95;
+	player->playerFleeChance = 95;
+	player->playerGambleChance = 95;
+	player->advancedExpAndCredits = true;
+	gameLocal.Printf("PLAYER STATS ENHANCED");
 }
 // -------------------------------------- custom commands ----------------------------------------------
 
@@ -3515,10 +3586,13 @@ void idGameLocal::InitConsoleCommands( void ) {
 	cmdSystem->AddCommand("choice1", Cmd_choice1_f, CMD_FL_GAME, "Trigger act or heal interactions");
 	cmdSystem->AddCommand("choice2", Cmd_choice2_f, CMD_FL_GAME, "Trigger block or acid interactions");
 	cmdSystem->AddCommand("choice3", Cmd_choice3_f, CMD_FL_GAME, "Trigger attack or double credits interactions");
+	cmdSystem->AddCommand("choice4", Cmd_choice4_f, CMD_FL_GAME, "Trigger enemy flee interaction");
+	cmdSystem->AddCommand("choice5", Cmd_choice5_f, CMD_FL_GAME, "Trigger gambling interaction");
 
 	cmdSystem->AddCommand("nextDialogue", Cmd_nextDialogue_f, CMD_FL_GAME, "Switches to next dialogue");
 
-	cmdSystem->AddCommand("shopMenu", Cmd_toggleShopMenu_f, CMD_FL_GAME, "Toggle shop menu");
+	//cmdSystem->AddCommand("shopMenu", Cmd_toggleShopMenu_f, CMD_FL_GAME, "Toggle shop menu");
+	cmdSystem->AddCommand("perkStats", Cmd_togglePerkStats_f, CMD_FL_GAME, "Toggle perk stats");
 
 	cmdSystem->AddCommand("armor", Cmd_armor_f, CMD_FL_GAME, "Showcase information on armor equipment");
 	cmdSystem->AddCommand("medikitPlus", Cmd_medikitPlus_f, CMD_FL_GAME, "Showcase information on medikit+");
@@ -3526,6 +3600,8 @@ void idGameLocal::InitConsoleCommands( void ) {
 	cmdSystem->AddCommand("experienceRing", Cmd_experienceRing_f, CMD_FL_GAME, "Showcase information on experience ring equipment");
 	cmdSystem->AddCommand("acidPlus", Cmd_acidPlus_f, CMD_FL_GAME, "Showcase information on venom equipment");
 	cmdSystem->AddCommand("confirm", Cmd_confirm_f, CMD_FL_GAME, "Confirms player's purchase of specific equipment");
+
+	cmdSystem->AddCommand("advanceStats", Cmd_enhanceStats_f, CMD_FL_GAME, "advance player stats");
 }
 
 /*

@@ -431,29 +431,36 @@ public:
 	// ---------------------------------------------- custom properties ----------------------------------------------
 	bool					initialHealthSet;		// flag for standard baseline health setup
 
-	bool					isTurnBasedMode;		// checks whether gameplay is set on turn-based mode
-	int						turnBasedRound;			// tracks the number of cycles of play during turn-based mode
+	const idDict			*damageDef;				// gets weapon damage in def file
 
-	const idDict			*damageDef;
+	// turn-based conditions
+		bool					isTurnBasedMode;
+		int						turnBasedRound;
 
 	// turn-based turns 
 		bool					playerTurn;
 		bool					enemyTurn;
 
+	// dialogue flags
+		bool					enterTurnBasedMode;
+		bool					canSwitchDialogue;
+		bool					switchToEnemyAttack;
+		bool					enemyDamageIncreased;
+
 	// enemy stats
-	idActor					*enemy;
-	idStr					enemyType;
-	int						enemyHealth;
-	int						enemyAttackDamage;
-	int						enemyMissChance;
-	int						enemyCritChance;
+		idActor					*enemy;
+		idStr					enemyType;
+		int						enemyHealth;
+		int						enemyAttackDamage;
+		int						enemyMissChance;
+		int						enemyCritChance;
 
 	// enemy condition
 		bool					isEnemyPoisoned;
 		bool					isEnemyKilled;
 
 	// player stats
-		int						playerAttackDamage;	// temp
+		int						playerAttackDamage;
 		int						playerCritChance;
 		int						playerHealAmount;
 		int						playerAcidDamage;
@@ -462,6 +469,9 @@ public:
 		int						playerExpLevel;
 		bool					isPlayerArmorOn;
 		bool					earnDoubleExp;
+		int						playerFleeChance;
+		int						playerGambleChance;
+		bool					advancedExpAndCredits;
 
 	// player input
 		bool					allowPlayerInput;
@@ -472,6 +482,8 @@ public:
 	// player choice
 		bool					blockAttack;
 		bool					earnDoubleCredits;
+		int						enemyPoisonedCounter;
+		bool					successfulFlee;
 	
 	// player credits and experience
 		int						creditsEarn;
@@ -479,10 +491,8 @@ public:
 		int						expLevelTotal;
 		int						expLevelMax;
 
-	bool					canSwitchDialogue;		// checks if player can move to next dialogue
-	bool					switchToEnemyAttack;	// flag to enable enemy attack
-
-	bool					isShopMenuVisible;
+	// shop conditions
+		bool					isShopMenuVisible;
 	// ---------------------------------------------- custom properties ----------------------------------------------
 
 public:
@@ -863,13 +873,16 @@ public:
 	// enemy functions
 		void					EnemyTurn();
 		void					EnemyAttack();
-		void					EnemyKilled();
+		void					KilledOrFleeEnemy();
 
 	// player functions
 		void					PlayerTurn();
 		void					PlayerAttack();
-		void					PlayerAction();
+		void					PlayerAct();
 		void					PlayerProgression();
+
+	// perks stats
+		void					PerksStats();
 	// ---------------------------------------------- custom functions ----------------------------------------------
 
 protected:
