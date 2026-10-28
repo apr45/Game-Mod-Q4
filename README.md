@@ -46,4 +46,4 @@ Hit keys '4', '5', '6', '7', or '8' to select equipment and confirm purchase by 
 
 On every seven cycles that pass during the turn-based battle, the monster's attack damage will increase by 5 points.
 
-Once you defeat the opponent by decreasing their health to 0, gameplay will resume to normal, and player movement will be unfrozen until you encounter another monster.
+Once you defeat the opponent by decreasing their health to 0, gameplay will resume to normal, and player movement will be unfrozen until you encounter another monster. However, if your health reaches 0, the game closes automatically.
