@@ -470,7 +470,6 @@ public:
 		bool					earnDoubleExp;
 		int						playerFleeChance;
 		int						playerGambleChance;
-		bool					advancedExpAndCredits;
 
 	// player input
 		bool					allowPlayerInput;

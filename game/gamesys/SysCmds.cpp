@@ -3102,6 +3102,11 @@ void Cmd_nextDialogue_f(const idCmdArgs& args) {
 			player->enemyPoisonedCounter--;
 			player->isEnemyPoisoned = false;
 
+			if (player->enemyPoisonedCounter <= 0) {
+				idStr temp = "";
+				player->hud->SetStateString("perksStats_perk6_status", temp + "Off|" + player->playerAcidDamage + "%");
+			}
+
 			player->EnemyTurn();
 		} else {
 			player->isEnemyKilled = true;
@@ -3180,7 +3185,7 @@ void Cmd_luckyDice_f(const idCmdArgs& args) {
 	// checks if shop is visible
 	if (player->isShopMenuVisible) {
 		player->playerPurchaseChoice = 8;
-		player->hud->SetStateString("equip_info", "Increase chance of critical hits by 10%.");
+		player->hud->SetStateString("equip_info", "Increase chance of critical hits by 15%.");
 	}
 }
 
@@ -3264,7 +3269,13 @@ void Cmd_confirm_f(const idCmdArgs& args) {
 				player->playerAcidDamage += 5;
 				player->playerCreditsAmount -= 20;
 				player->hud->SetStateString("equip_info", "Acid+ Purchased");
-				player->hud->SetStateString("perksStats_perk6_status", "Off|10%");
+
+				idStr temp = "";
+				if (player->enemyPoisonedCounter > 0) {
+					player->hud->SetStateString("perksStats_perk6_status", temp + "On |" + player->playerAcidDamage + "%");
+				} else {
+					player->hud->SetStateString("perksStats_perk6_status", temp + "Off|" + player->playerAcidDamage + "%");
+				}
 			} else {
 				player->hud->SetStateString("equip_info", "You already brought Acid+");
 			}
@@ -3274,15 +3285,32 @@ void Cmd_confirm_f(const idCmdArgs& args) {
 	}
 }
 
-// enchance player stats
-void Cmd_enhanceStats_f(const idCmdArgs& args) {
+// give extra credits to player
+void Cmd_giveCredits_f(const idCmdArgs& args) {
+	idPlayer* player = gameLocal.GetLocalPlayer();
+	player->playerCreditsAmount += 200;
+	gameLocal.Printf("PLAYER RECIEVES 200 CREDITS\n");
+}
+
+// increase player chance for flee and gamble
+void Cmd_increaseChance_f(const idCmdArgs& args) {
+	idPlayer* player = gameLocal.GetLocalPlayer();
+	player->playerFleeChance = 100;
+	player->playerGambleChance = 100;
+	gameLocal.Printf("FLEE AND GAMBLE CHANCE INCREASED TO 100%\n");
+}
+
+// resets player health to 100
+void Cmd_restoreHealth_f(const idCmdArgs& args) {
 	idPlayer* player = gameLocal.GetLocalPlayer();
 	player->health = 100;
-	player->playerCritChance = 95;
-	player->playerFleeChance = 95;
-	player->playerGambleChance = 95;
-	player->advancedExpAndCredits = true;
-	gameLocal.Printf("PLAYER STATS ENHANCED");
+	gameLocal.Printf("HEALTH RESET TO 100\n");
+}
+
+// displays weapon attack damage
+void Cmd_showAttackDamage_f(const idCmdArgs& args) {
+	idPlayer* player = gameLocal.GetLocalPlayer();
+	gameLocal.Printf("WEAPON ATTACK DAMAGE: %i \n", player->playerAttackDamage);
 }
 // -------------------------------------- custom commands ----------------------------------------------
 
@@ -3601,7 +3629,10 @@ void idGameLocal::InitConsoleCommands( void ) {
 	cmdSystem->AddCommand("acidPlus", Cmd_acidPlus_f, CMD_FL_GAME, "Showcase information on venom equipment");
 	cmdSystem->AddCommand("confirm", Cmd_confirm_f, CMD_FL_GAME, "Confirms player's purchase of specific equipment");
 
-	cmdSystem->AddCommand("advanceStats", Cmd_enhanceStats_f, CMD_FL_GAME, "advance player stats");
+	cmdSystem->AddCommand("credits", Cmd_giveCredits_f, CMD_FL_GAME, "Give credits to player");
+	cmdSystem->AddCommand("chance", Cmd_increaseChance_f, CMD_FL_GAME, "Increases player's flee and gamble chance");
+	cmdSystem->AddCommand("health", Cmd_restoreHealth_f, CMD_FL_GAME, "Resets player's health");
+	cmdSystem->AddCommand("weaponDamage", Cmd_showAttackDamage_f, CMD_FL_GAME, "Displays player attack damage");
 }
 
 /*

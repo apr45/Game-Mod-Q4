@@ -1557,8 +1557,6 @@ void idPlayer::Init( void ) {
 
 	freezePlayerMovement = false; // ensures player movement is normal at the beginning
 
-	PerksStats(); // set up perks status
-
 	// sets up initial turn state
 		isTurnBasedMode = false;
 		playerTurn = false;
@@ -1594,7 +1592,7 @@ void idPlayer::Init( void ) {
 		successfulFlee = false;
 		playerFleeChance = 5;
 		playerGambleChance = 10;
-		advancedExpAndCredits = false;
+		earnDoubleCredits = false;
 
 	// set up player attack damage
 		damageDef = gameLocal.FindEntityDefDict("damage_blaster", false);
@@ -1603,6 +1601,8 @@ void idPlayer::Init( void ) {
 
 	// set up initial conditions of shop
 		isShopMenuVisible = false;
+
+	PerksStats(); // set up perks status
 	// ---------------------------------------------- custom properties ----------------------------------------------
 
 
@@ -9738,7 +9738,7 @@ void idPlayer::Think( void ) {
 				
 				// stores enemy stats that player is fighting against
 				enemy = ent;
-				enemyAttackDamage = 50;
+				enemyAttackDamage = 5;
 				enemyType = enemyType.EnemyNameCleanUp(ent->name);
 				hud->SetStateString("enemy_name", enemyType);
 				enemyHealth = ent->health;
@@ -9766,7 +9766,7 @@ void idPlayer::Think( void ) {
 			// increases enemy attack damage for every 5 cycles
 			if (turnBasedRound % 7 == 0) {
 				enemyAttackDamage += 5;
-				gameLocal.Printf("Enemy Attack Increased by 5.");
+				gameLocal.Printf("Enemy Attack Increased by 5.\n");
 				enemyDamageIncreased = true;
 			}
 
@@ -14297,7 +14297,7 @@ void idPlayer::PlayerTurn() {
 				blockAttack = true;
 
 				creditsEarn = 5;
-				expEarn = 0;
+				expEarn = 15;
 			}
 			else if (playerChoice == 3) {
 				PlayerAttack();
@@ -14329,12 +14329,8 @@ void idPlayer::EnemyTurn() {
 		hud->SetStateString("dialogue_text2", "");
 
 		// reset healing perk
-		if (playerHealAmount == 10) {
-			hud->SetStateString("perksStats_perk2_status", "Off|10%");
-		}
-		else {
-			hud->SetStateString("perksStats_perk2_status", "Off|20%");
-		}
+		idStr temp = "";
+		hud->SetStateString("perksStats_perk2_status", temp + "Off|" + playerHealAmount + "%");
 
 		// closes shop
 		hud->HandleNamedEvent("shopMenu");
@@ -14487,24 +14483,16 @@ void idPlayer::PlayerAct() {
 
 		idStr temp = "";
 		hud->SetStateString("dialogue_text1", temp + "You took a medikit. You gained " + playerHealAmount + " points back in health.");
-
-		if (playerHealAmount == 10) {
-			hud->SetStateString("perksStats_perk2_status", "On |10%");
-		} else {
-			hud->SetStateString("perksStats_perk2_status", "On |20%");
-		}
+		hud->SetStateString("perksStats_perk2_status", temp + "On |" + playerHealAmount + "%");
 		
 		creditsEarn = 2;
 		expEarn = 5;
 	} else if (playerChoice == 2){
 		enemyPoisonedCounter = 2;
-		hud->SetStateString("dialogue_text1", "You threw acid. " + enemyType + "is poisoned for two turns.");
 
-		if (playerAcidDamage == 5) {
-			hud->SetStateString("perksStats_perk6_status", "On | 5%");
-		} else {
-			hud->SetStateString("perksStats_perk6_status", "On |10%");
-		}
+		idStr temp = "";
+		hud->SetStateString("dialogue_text1", "You threw acid. " + enemyType + "is poisoned for two turns.");
+		hud->SetStateString("perksStats_perk6_status", temp + "On |" + playerAcidDamage + "%");
 		
 		creditsEarn = 7;
 		expEarn = 2;
@@ -14595,11 +14583,6 @@ void idPlayer::PlayerProgression() {
 		expEarn *= 2;
 	}
 
-	if (advancedExpAndCredits) {
-		creditsEarn *= 5;
-		expEarn *= 5;
-	}
-
 	// add credits and experience points to player's current amount
 	playerCreditsAmount += creditsEarn;
 	playerExpAmount += expEarn;
@@ -14622,7 +14605,7 @@ void idPlayer::PlayerProgression() {
 			damageDef = gameLocal.FindEntityDefDict("damage_pellet", false);
 		} else if (playerExpLevel == 2) {
 			idealWeapon = SlotForWeapon("weapon_machinegun");
-			hud->SetStateString("weaponInfo_text", "Machine gun");
+			hud->SetStateString("weaponInfo_text", "Machine Gun");
 			damageDef = gameLocal.FindEntityDefDict("damage_machinegun", false);
 		} else if (playerExpLevel == 3) {
 			idealWeapon = SlotForWeapon("weapon_hyperblaster");
@@ -14657,7 +14640,7 @@ Handles the process on dead enemies and fleeing from enemies
 */
 void idPlayer::KilledOrFleeEnemy() {
 	// checks if enemy health reached 0
-	if ((enemyHealth < 0 && !isEnemyKilled) || successfulFlee) {
+	if ((enemyHealth <= 0 && !isEnemyKilled) || successfulFlee) {
 		// hides enemy stats
 		hud->HandleNamedEvent("enemyStats");
 
@@ -14686,18 +14669,10 @@ void idPlayer::KilledOrFleeEnemy() {
 		turnBasedRound = 0;
 
 		// reset perks
-		if (playerHealAmount == 10) {
-			hud->SetStateString("perksStats_perk2_status", "Off|10%");
-		}
-		else {
-			hud->SetStateString("perksStats_perk2_status", "Off|20%");
-		}
-		if (playerAcidDamage == 5) {
-			hud->SetStateString("perksStats_perk6_status", "On | 5%");
-		}
-		else {
-			hud->SetStateString("perksStats_perk6_status", "On |10%");
-		}
+		idStr temp = "";
+		hud->SetStateString("perksStats_perk2_status", temp + "Off|" + playerHealAmount + "%");
+		hud->SetStateString("perksStats_perk5_status", "Off| 2x");
+		hud->SetStateString("perksStats_perk6_status", temp + "Off|" + playerAcidDamage + "%");
 
 		// closes shop
 		hud->HandleNamedEvent("shopMenu");
@@ -14739,14 +14714,15 @@ void idPlayer::KilledOrFleeEnemy() {
 ==============
 idPlayer::PerksStats
 
-Sets up initial state of perks
+Sets state of perks
 ==============
 */
 void idPlayer::PerksStats() {
+	idStr temp = "";
 	hud->SetStateString("perksStats_perk1_status", "Off|20%");
-	hud->SetStateString("perksStats_perk2_status", "Off|10%");
-	hud->SetStateString("perksStats_perk3_status", "On |10%");
+	hud->SetStateString("perksStats_perk2_status", temp + "Off|" + playerHealAmount + "%");
+	hud->SetStateString("perksStats_perk3_status", temp + "On |" + playerCritChance + "%");
 	hud->SetStateString("perksStats_perk4_status", "Off| 2x");
 	hud->SetStateString("perksStats_perk5_status", "Off| 2x");
-	hud->SetStateString("perksStats_perk6_status", "Off| 5%");
+	hud->SetStateString("perksStats_perk6_status", temp + "Off|" + playerAcidDamage + "%");
 }
